@@ -37,13 +37,9 @@ let view = loadView();
 let plannerLoaded = false;
 let lastEventsJson = '';
 
+// Дашборд всегда открывается с главной — это сводка по всем инструментам.
 function loadView() {
-  try {
-    const saved = localStorage.getItem(VIEW_KEY);
-    return ['home', 'orders', 'planner'].includes(saved) ? saved : 'home';
-  } catch {
-    return 'home';
-  }
+  return 'home';
 }
 
 function eventsLabel(n) {
