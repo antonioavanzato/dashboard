@@ -1058,3 +1058,13 @@ body.ed-open { overflow: hidden; }
 #lock-screen.lock-tap .brand { animation: brand-in .9s var(--ease) both, brand-breathe 2.8s ease-in-out .9s infinite; }
 @keyframes brand-breathe { 50% { transform: scale(1.06); opacity: .7; } }
 #auth-screen #auth-settings { align-self: center; }
+
+/* Фон без полос: плавные «растянутые» градиенты (много ступеней по кривой)
+   и зерно поверх, которое растворяет оставшиеся переходы. */
+.aurora i:nth-child(1) { background: radial-gradient(closest-side,
+  rgba(31,111,92,.26), rgba(31,111,92,.22) 15%, rgba(31,111,92,.15) 35%, rgba(31,111,92,.08) 55%, rgba(31,111,92,.03) 75%, rgba(31,111,92,0)); }
+.aurora i:nth-child(2) { background: radial-gradient(closest-side,
+  rgba(35,48,110,.28), rgba(35,48,110,.24) 15%, rgba(35,48,110,.16) 35%, rgba(35,48,110,.09) 55%, rgba(35,48,110,.03) 75%, rgba(35,48,110,0)); }
+.aurora i:nth-child(3) { background: radial-gradient(closest-side,
+  rgba(90,50,25,.18), rgba(90,50,25,.15) 15%, rgba(90,50,25,.10) 35%, rgba(90,50,25,.05) 55%, rgba(90,50,25,.02) 75%, rgba(90,50,25,0)); }
+.grain { opacity: .11; background-size: 120px 120px; mix-blend-mode: overlay; }
