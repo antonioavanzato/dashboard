@@ -1000,3 +1000,9 @@ body { background: transparent; }
 .day-head { margin: 16px 0 8px; min-height: 32px; }
 .day-head .group-title { margin: 0; }
 @media (min-width: 900px) { #planner > .day-head:first-of-type { margin: 0 0 8px; min-height: 32px; } }
+
+/* Док ниже: заходит в зону полоски «домой», как таб-бар в родных приложениях */
+.tabbar { bottom: max(8px, calc(env(safe-area-inset-bottom) - 14px)); }
+body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); }
+body::after { height: calc(env(safe-area-inset-bottom) + 56px); }
+@media (min-width: 900px) { body { padding-bottom: 40px; } }
