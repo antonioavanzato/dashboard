@@ -4,7 +4,7 @@
 // Стратегия — «сначала сеть». Кэш нужен лишь для работы без связи.
 // Обратный порядок (сначала кэш) приводил к тому, что на устройстве
 // неделями жила старая версия страницы.
-const CACHE = 'dashboard-shell-v11';
+const CACHE = 'dashboard-shell-v12';
 const SHELL = [
   './',
   'index.html',
@@ -27,9 +27,9 @@ const SHELL = [
   'js/sheet-swipe.js',
   'icons/icon.svg',
   'icons/logo.svg',
-  'icons/icon-180.png',
-  'icons/icon-192.png',
-  'icons/icon-512.png',
+  'icons/apple-touch-icon-v2.png',
+  'icons/icon-192-v2.png',
+  'icons/icon-512-v2.png',
 ];
 
 self.addEventListener('install', (event) => {
