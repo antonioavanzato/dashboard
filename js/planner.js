@@ -316,6 +316,13 @@ export function selectedDay() {
   return selected;
 }
 
+let createActions = [];
+
+/** Что можно создать на выбранный день — для кнопки «+». */
+export function getCreateActions() {
+  return createActions;
+}
+
 export function renderPlanner() {
   const root = document.getElementById('planner');
   root.replaceChildren();
@@ -325,15 +332,13 @@ export function renderPlanner() {
   const tasks = handlers.dayTasks ? handlers.dayTasks(selected) : { add: null, items: [], notice: null };
   const dayHead = element('div', 'day-head');
   dayHead.append(element('h2', 'group-title', formatDayTitle(selected)));
-  const adds = element('div', 'day-adds');
+  // Создание — через кнопку «+» рядом с доком (main.js берёт действия отсюда).
+  createActions = [];
+  if (tasks.add) createActions.push({ label: 'Задача', run: () => tasks.add.click() });
   if (handlers.onCreate) {
-    const add = element('button', 'button', '+ Событие');
-    add.type = 'button';
-    add.addEventListener('click', () => handlers.onCreate(selected));
-    adds.append(add);
+    const day = selected;
+    createActions.push({ label: 'Событие', run: () => handlers.onCreate(day) });
   }
-  if (tasks.add) adds.append(tasks.add);
-  dayHead.append(adds);
   root.append(dayHead);
 
   const feed = element('div', 'day-feed');

@@ -1006,3 +1006,34 @@ body { background: transparent; }
 body { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); }
 body::after { height: calc(env(safe-area-inset-bottom) + 56px); }
 @media (min-width: 900px) { body { padding-bottom: 40px; } }
+
+/* Кнопка «+» рядом с доком */
+.fab-wrap { position: fixed; z-index: 41; bottom: max(8px, calc(env(safe-area-inset-bottom) - 14px)); left: calc(50% + 118px); }
+.tabbar[hidden] ~ .fab-wrap { display: none; }
+.fab { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #000;
+  background: var(--accent); border: 0; box-shadow: 0 10px 30px -8px rgba(124, 240, 197, .55);
+  transition: transform .45s var(--spring); }
+.fab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: transform .45s var(--spring); }
+.fab:active { transform: scale(.88); }
+.fab[aria-expanded="true"] svg { transform: rotate(45deg); }
+.fab-menu { position: absolute; bottom: calc(100% + 10px); right: 0; display: flex; flex-direction: column; gap: 4px; padding: 6px; min-width: 150px;
+  border-radius: 18px; background: rgba(20, 22, 28, .78); border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, .8); transform-origin: bottom right; animation: fab-pop .4s var(--spring) both; }
+.fab-menu[hidden] { display: none; }
+@keyframes fab-pop { from { opacity: 0; transform: scale(.85) translateY(6px); } }
+.fab-item { text-align: left; padding: 12px 14px; border-radius: 12px; border: 0; background: transparent; color: var(--text);
+  font: 500 15px/1 "Inter Tight", system-ui, sans-serif; cursor: pointer; transition: background .2s; }
+.fab-item:hover, .fab-item:active { background: rgba(255, 255, 255, .08); }
+.day-adds { display: none; }
+@media (min-width: 900px) {
+  .fab-wrap { left: 32px; bottom: auto; top: calc(50% + 120px); }
+  .fab { width: 48px; height: 48px; }
+  .fab-menu { bottom: auto; top: 0; right: auto; left: calc(100% + 10px); transform-origin: top left; }
+}
+/* Пилюля и «+» — одна группа по центру */
+@media (max-width: 899px) {
+  body:has(.fab-wrap:not([hidden])) .tabbar { transform: translate(calc(-50% - 31px), 0); }
+  .fab-wrap { left: calc(50% + 87px); }
+  .fab { width: 50px; height: 50px; }
+}

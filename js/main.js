@@ -1,6 +1,6 @@
 import { listOrders, listEvents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError } from './api.js';
 import {
-  setEvents, eventsCount, allEvents, renderPlanner, resetPlanner, setPlannerHandlers, findEvent, eventBody,
+  setEvents, eventsCount, allEvents, getCreateActions, renderPlanner, resetPlanner, setPlannerHandlers, findEvent, eventBody,
 } from './planner.js';
 import { openEditor } from './event-editor.js';
 import { startTasks, hasTasksOn } from './tasks.js';
@@ -63,6 +63,8 @@ function applyView() {
   document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
   document.getElementById('list-screen').dataset.view = view;
+  document.getElementById('fab-wrap').hidden = !isPlanner;
+  closeFab();
   document.getElementById('title').textContent = isPlanner ? 'Планер' : 'Заявки';
   if (isHome) {
     renderHome({ orders, events: plannerLoaded ? allEvents() : null });
@@ -360,6 +362,31 @@ async function onAuthSubmit(event) {
 
 document.getElementById('auth-form').addEventListener('submit', onAuthSubmit);
 document.getElementById('settings').addEventListener('click', openSettingsSheet);
+// Кнопка «+» у дока: задача или событие на выбранный день.
+const fab = document.getElementById('fab');
+const fabMenu = document.getElementById('fab-menu');
+function closeFab() {
+  fabMenu.hidden = true;
+  fab.setAttribute('aria-expanded', 'false');
+}
+fab.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!fabMenu.hidden) return closeFab();
+  const actions = getCreateActions();
+  if (actions.length === 1) return actions[0].run();
+  fabMenu.replaceChildren(...actions.map((a) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fab-item';
+    b.textContent = a.label;
+    b.addEventListener('click', () => { closeFab(); a.run(); });
+    return b;
+  }));
+  fabMenu.hidden = false;
+  fab.setAttribute('aria-expanded', 'true');
+});
+document.addEventListener('click', (e) => { if (!e.target.closest('#fab-wrap')) closeFab(); });
+
 document.getElementById('tab-home').addEventListener('click', () => switchView('home'));
 document.getElementById('tab-orders').addEventListener('click', () => switchView('orders'));
 document.getElementById('tab-planner').addEventListener('click', () => switchView('planner'));
