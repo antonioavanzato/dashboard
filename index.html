@@ -24,7 +24,7 @@
 
   <!-- Скрыт до запуска скрипта: экран выбирает main.js (ключ / Face ID / список). -->
   <main id="auth-screen" class="screen" hidden>
-    <h1 class="auth-title">Заявки</h1>
+    <img class="brand" src="icons/logo.svg" alt="" aria-hidden="true">
     <form id="auth-form" class="auth-form">
       <label class="auth-label" for="auth-key">Ключ доступа</label>
       <input id="auth-key" class="auth-input" type="password" autocomplete="off"
@@ -36,7 +36,7 @@
   </main>
 
   <main id="lock-screen" class="screen" hidden>
-    <h1 class="auth-title">Заявки</h1>
+    <img class="brand" src="icons/logo.svg" alt="" aria-hidden="true">
     <div class="auth-form">
       <p id="lock-status" class="auth-label">Вход по Face ID…</p>
       <p id="lock-error" class="auth-error" hidden></p>

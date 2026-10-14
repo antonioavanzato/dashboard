@@ -1047,3 +1047,14 @@ body.ed-open { overflow: hidden; }
 #lock-screen.lock-tap { position: fixed; inset: 0; padding: 0 18px; cursor: pointer; }
 #lock-screen.lock-tap #lock-status { animation: breathe-text 2.4s ease-in-out infinite; color: var(--text); }
 @keyframes breathe-text { 50% { opacity: .45; } }
+
+/* Экран входа и Face ID: маленький логотип по центру */
+#lock-screen:not([hidden]), #auth-screen:not([hidden]) {
+  position: fixed; inset: 0; padding: 0 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+.brand { width: 64px; height: 64px; opacity: .92; animation: brand-in .9s var(--ease) both; }
+@keyframes brand-in { from { opacity: 0; transform: scale(.85); filter: blur(6px); } }
+#lock-screen .auth-form, #auth-screen .auth-form { width: 100%; max-width: 340px; align-items: stretch; text-align: center; }
+#lock-screen #lock-status { margin: 0; font-size: 11px; }
+#lock-screen.lock-tap .brand { animation: brand-in .9s var(--ease) both, brand-breathe 2.8s ease-in-out .9s infinite; }
+@keyframes brand-breathe { 50% { transform: scale(1.06); opacity: .7; } }
+#auth-screen #auth-settings { align-self: center; }

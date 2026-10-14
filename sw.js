@@ -4,7 +4,7 @@
 // Стратегия — «сначала сеть». Кэш нужен лишь для работы без связи.
 // Обратный порядок (сначала кэш) приводил к тому, что на устройстве
 // неделями жила старая версия страницы.
-const CACHE = 'dashboard-shell-v9';
+const CACHE = 'dashboard-shell-v10';
 const SHELL = [
   './',
   'index.html',
@@ -26,6 +26,7 @@ const SHELL = [
   'js/home.js',
   'js/sheet-swipe.js',
   'icons/icon.svg',
+  'icons/logo.svg',
   'icons/icon-192.png',
   'icons/icon-512.png',
 ];
