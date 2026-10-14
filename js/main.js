@@ -45,6 +45,14 @@ function loadView() {
   }
 }
 
+function eventsLabel(n) {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return `${n} событие`;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return `${n} события`;
+  return `${n} событий`;
+}
+
 function applyView() {
   const isPlanner = view === 'planner';
   const isHome = view === 'home';
@@ -61,7 +69,7 @@ function applyView() {
   } else if (isPlanner) {
     // Firebase подгружается только когда открыт Планер.
     startTasks(onTasksChanged);
-    document.getElementById('subtitle').textContent = plannerLoaded ? `${eventsCount()} событий` : 'Загрузка…';
+    document.getElementById('subtitle').textContent = plannerLoaded ? eventsLabel(eventsCount()) : 'Загрузка…';
     renderPlanner();
   } else {
     render();
