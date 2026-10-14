@@ -496,7 +496,8 @@ export function enablePullToRefresh(onRefresh) {
 
   document.addEventListener('touchstart', (event) => {
     // Лента статусов прокручивается вбок — там жест обновления не нужен.
-    if (event.target.closest?.('#filters')) {
+    // Открыто окно — жест принадлежит ему, а не обновлению страницы.
+    if (document.body.classList.contains('ed-open') || event.target.closest?.('#filters')) {
       startY = null;
       return;
     }

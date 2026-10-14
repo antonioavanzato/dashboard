@@ -9,6 +9,7 @@ import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
 import { renderHome } from './home.js';
+import './sheet-swipe.js';
 import {
   showAuthScreen,
   showListScreen,

@@ -1037,3 +1037,8 @@ body::after { height: calc(env(safe-area-inset-bottom) + 56px); }
   .fab-wrap { left: calc(50% + 87px); }
   .fab { width: 50px; height: 50px; }
 }
+
+/* Лист: своя прокрутка не утекает на страницу под ним */
+.ed-overlay { touch-action: none; }
+.ed-sheet { overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; will-change: transform; }
+body.ed-open { overflow: hidden; }
