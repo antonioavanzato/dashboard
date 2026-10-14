@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#07080b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Заявки">
+  <title>Заявки</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- Скрыт до запуска скрипта: экран выбирает main.js (ключ / Face ID / список). -->
+  <main id="auth-screen" class="screen" hidden>
+    <h1 class="auth-title">Заявки</h1>
+    <form id="auth-form" class="auth-form">
+      <label class="auth-label" for="auth-key">Ключ доступа</label>
+      <input id="auth-key" class="auth-input" type="password" autocomplete="off"
+             autocapitalize="off" autocorrect="off" spellcheck="false" required>
+      <button id="auth-submit" class="button button--primary" type="submit">Войти</button>
+      <p id="auth-error" class="auth-error" hidden></p>
+      <button id="auth-settings" class="button" type="button">Все входы и ключи — Настройки</button>
+    </form>
+  </main>
+
+  <main id="lock-screen" class="screen" hidden>
+    <h1 class="auth-title">Заявки</h1>
+    <div class="auth-form">
+      <p id="lock-status" class="auth-label">Вход по Face ID…</p>
+      <p id="lock-error" class="auth-error" hidden></p>
+      <div id="lock-actions" class="lock-actions" hidden>
+        <button id="lock-unlock" class="button button--primary" type="button">Повторить Face ID</button>
+        <button id="lock-manual" class="button" type="button">Ввести ключ вручную</button>
+      </div>
+    </div>
+  </main>
+
+  <main id="list-screen" class="screen" hidden>
+    <header class="header">
+      <div>
+        <h1 id="title" class="header-title">Заявки</h1>
+        <p id="subtitle" class="header-subtitle"></p>
+      </div>
+      <div class="header-actions">
+        <span id="conn" class="conn" data-online="false" role="status" aria-live="polite"
+              title="Нет связи с облаком">
+          <span class="conn-dot" aria-hidden="true"></span>
+          <span class="visually-hidden">Нет связи с облаком</span>
+        </span>
+        <button id="settings" class="icon-button" type="button" title="Настройки" aria-label="Настройки">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <p id="pull" class="pull" hidden></p>
+
+    <p id="banner" class="banner" hidden></p>
+
+    <section id="view-home" class="view" hidden>
+      <div class="hero">
+        <p class="eyebrow" id="greeting">Добрый день</p>
+        <p class="clock" id="clock">00:00</p>
+        <p class="date" id="date"></p>
+      </div>
+      <div class="grid">
+        <article class="tile stat" data-go="orders">
+          <span class="label">Заявки</span>
+          <b class="big mono" id="homeNew">—</b>
+          <span class="sub" id="homeOrders">новых</span>
+        </article>
+        <article class="tile stat" data-go="planner">
+          <span class="label">Сегодня</span>
+          <b class="big mono" id="homeToday">—</b>
+          <span class="sub" id="homeTodaySub">событий</span>
+        </article>
+        <article class="tile wide" data-go="planner">
+          <div class="row"><span class="label">Ближайшее</span><span class="sub">планер</span></div>
+          <div id="homeNext" class="next"></div>
+        </article>
+        <article class="tile wide">
+          <div class="row"><span class="label">Год <span id="yearNum"></span></span><span class="mono sub" id="yearPct"></span></div>
+          <div class="dots" id="yearDots"></div>
+        </article>
+      </div>
+    </section>
+
+    <div id="view-orders" class="view">
+      <nav id="filters" class="filters"></nav>
+      <section id="list" class="list"></section>
+    </div>
+
+    <section id="view-planner" class="view" hidden>
+      <div id="planner"></div>
+    </section>
+  </main>
+
+  <!-- Нижняя пилюля разделов, как таб-бар в приложении: прячется при скролле вниз. -->
+  <nav id="tabbar" class="tabbar dock" aria-label="Раздел" hidden>
+    <span class="dock-glow" aria-hidden="true"></span>
+    <button id="tab-home" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Главная" title="Главная">
+      <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg>
+    </button>
+    <button id="tab-orders" class="tabbar-btn" type="button" aria-pressed="true" aria-label="Заявки" title="Заявки">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    </button>
+    <button id="tab-planner" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Планер" title="Планер">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+    </button>
+    <button id="tab-settings" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Настройки" title="Настройки">
+      <svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    </button>
+  </nav>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
