@@ -1042,3 +1042,8 @@ body::after { height: calc(env(safe-area-inset-bottom) + 56px); }
 .ed-overlay { touch-action: none; }
 .ed-sheet { overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; will-change: transform; }
 body.ed-open { overflow: hidden; }
+
+/* Экран Face ID: весь экран — кнопка */
+#lock-screen.lock-tap { position: fixed; inset: 0; padding: 0 18px; cursor: pointer; }
+#lock-screen.lock-tap #lock-status { animation: breathe-text 2.4s ease-in-out infinite; color: var(--text); }
+@keyframes breathe-text { 50% { opacity: .45; } }

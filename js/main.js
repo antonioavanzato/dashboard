@@ -427,6 +427,20 @@ async function tryUnlock() {
   }
 }
 document.getElementById('lock-unlock').addEventListener('click', tryUnlock);
+
+function waitForTapToUnlock() {
+  const screen = document.getElementById('lock-screen');
+  document.getElementById('lock-status').textContent = 'Коснитесь экрана для входа по Face ID';
+  screen.classList.add('lock-tap');
+  const go = (e) => {
+    if (e.target.closest('#lock-manual')) return;
+    screen.removeEventListener('click', go);
+    screen.classList.remove('lock-tap');
+    document.getElementById('lock-status').textContent = 'Вход по Face ID…';
+    tryUnlock();
+  };
+  screen.addEventListener('click', go);
+}
 document.getElementById('lock-manual').addEventListener('click', () => {
   setAuthError(null);
   showAuthScreen();
@@ -438,7 +452,11 @@ if (loadKey()) {
   startPolling();
 } else if (hasLock()) {
   showLockScreen();
-  tryUnlock();
+  // iPhone без касания не пускает к Face ID сразу: сначала показывает
+  // своё окно подтверждения. Поэтому на сенсорных экранах ждём одно касание
+  // в любом месте — и из него сразу запускаем Face ID.
+  if (matchMedia('(pointer: coarse)').matches) waitForTapToUnlock();
+  else tryUnlock();
 } else {
   showAuthScreen();
 }
