@@ -321,24 +321,30 @@ export function renderPlanner() {
   root.replaceChildren();
   renderCalendar(root);
 
+  // Один день — одна лента: события и задачи вместе, по времени.
+  const tasks = handlers.dayTasks ? handlers.dayTasks(selected) : { add: null, items: [], notice: null };
   const dayHead = element('div', 'day-head');
   dayHead.append(element('h2', 'group-title', formatDayTitle(selected)));
+  const adds = element('div', 'day-adds');
   if (handlers.onCreate) {
     const add = element('button', 'button', '+ Событие');
     add.type = 'button';
     add.addEventListener('click', () => handlers.onCreate(selected));
-    dayHead.append(add);
+    adds.append(add);
   }
+  if (tasks.add) adds.append(tasks.add);
+  dayHead.append(adds);
   root.append(dayHead);
-  const dayEvents = eventsOn(selected);
-  if (dayEvents.length) {
-    for (const event of dayEvents) root.append(eventCard(event));
-  } else {
-    root.append(element('p', 'empty empty--small', 'В этот день ничего нет'));
-  }
 
-  if (handlers.renderTasks) handlers.renderTasks(root, selected);
-
+  const feed = element('div', 'day-feed');
+  const items = [
+    ...eventsOn(selected).map((e) => ({ date: e.date, node: eventCard(e) })),
+    ...tasks.items,
+  ].sort((a, b) => a.date - b.date);
+  if (items.length) for (const item of items) feed.append(item.node);
+  else if (!tasks.notice) feed.append(element('p', 'empty empty--small', 'В этот день ничего нет'));
+  if (tasks.notice) feed.append(tasks.notice);
+  root.append(feed);
 }
 
 export function resetPlanner() {

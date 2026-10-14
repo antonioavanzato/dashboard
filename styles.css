@@ -980,3 +980,23 @@ body { background: transparent; }
 }
 .next-when { min-width: 112px; }
 @media (min-width: 900px) { .grid .tile.wide:last-child { grid-column: 1 / -1; } }
+
+/* Лента дня: события и задачи вместе */
+.day-adds { display: flex; gap: 6px; }
+.day-feed { display: flex; flex-direction: column; gap: 6px; }
+.day-feed > .ev-card, .day-feed > .tk-row { margin-bottom: 0; }
+/* Задача в ленте — того же вида, что событие: время слева, кружок вместо точки */
+.tk-row { padding: 11px 12px; gap: 10px; }
+.tk-check { width: 20px; height: 20px; }
+.tk-meta { font-family: "JetBrains Mono", monospace; font-size: 11px; }
+@media (min-width: 900px) {
+  #planner > .day-head:first-of-type { grid-row: 1; margin-top: 0; }
+  #planner > .day-feed { grid-row: 2 / span 40; }
+}
+
+/* Док всегда на месте — не прячется при прокрутке */
+.tabbar.is-hidden { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+@media (min-width: 900px) { .tabbar.dock.is-hidden { transform: translateY(-50%); } }
+.day-head { margin: 16px 0 8px; min-height: 32px; }
+.day-head .group-title { margin: 0; }
+@media (min-width: 900px) { #planner > .day-head:first-of-type { margin: 0 0 8px; min-height: 32px; } }

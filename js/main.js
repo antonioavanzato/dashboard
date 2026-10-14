@@ -4,7 +4,7 @@ import {
 } from './planner.js';
 import { openEditor } from './event-editor.js';
 import { startTasks, hasTasksOn } from './tasks.js';
-import { renderTasksSection } from './tasks-view.js';
+import { dayTasks } from './tasks-view.js';
 import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
@@ -246,7 +246,7 @@ setPlannerHandlers({
   },
   onCreate: (day) => openEditor(null, day, onSaveEvent),
   hasTasks: (day) => hasTasksOn(day),
-  renderTasks: (root, day) => renderTasksSection(root, day, openSettingsSheet),
+  dayTasks: (day) => dayTasks(day, openSettingsSheet),
 });
 
 async function poll() {

@@ -91,3 +91,26 @@ export function renderTasksSection(root, day, onOpenSettings) {
   if (list.length) for (const t of list) root.append(taskRow(t));
   else root.append(element('p', 'empty empty--small', 'Задач на этот день нет'));
 }
+
+// Задачи дня для общей ленты Планера: строки с временем, кнопка «+ Задача»
+// и подсказка, если задачи ещё не загружены или нужен вход.
+export function dayTasks(day, onOpenSettings) {
+  const { state, error } = tasksState();
+  if (state === 'ready') {
+    const add = element('button', 'button', '+ Задача');
+    add.type = 'button';
+    add.addEventListener('click', () => openTaskEditor(null, day, (fields) => createTask(fields)));
+    return { add, items: tasksOn(day).map((t) => ({ date: t.date, node: taskRow(t) })), notice: null };
+  }
+  if (state === 'signed-out') {
+    const box = element('div', 'tk-login');
+    box.append(element('p', 'tk-hint', 'Задачи появятся здесь после входа в настройках.'));
+    const open = element('button', 'button', 'Открыть настройки');
+    open.type = 'button';
+    open.addEventListener('click', () => onOpenSettings());
+    box.append(open);
+    return { add: null, items: [], notice: box };
+  }
+  const text = state === 'error' ? error : 'Загрузка задач…';
+  return { add: null, items: [], notice: element('p', 'empty empty--small', text) };
+}
