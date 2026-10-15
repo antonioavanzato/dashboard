@@ -79,7 +79,11 @@ function applyView() {
   document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
   document.getElementById('list-screen').dataset.view = view;
-  document.getElementById('fab-wrap').hidden = !(isPlanner || view === 'students');
+  const showFab = isPlanner || view === 'students';
+  document.getElementById('fab-wrap').hidden = !showFab;
+  // Класс вместо :has(): Safari не всегда пересчитывает :has() при смене hidden,
+  // и пилюля не отодвигалась — «+» ложился на неё.
+  document.body.classList.toggle('has-fab', showFab);
   document.getElementById('tabbar').classList.remove('is-hidden');
   closeFab();
   document.getElementById('title').textContent = isPlanner ? 'Планер' : view === 'students' ? 'Ученики' : 'Заявки';

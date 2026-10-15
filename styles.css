@@ -1032,8 +1032,9 @@ body::after { height: calc(env(safe-area-inset-bottom) + 56px); }
 }
 /* Пилюля и «+» — одна группа по центру */
 @media (max-width: 899px) {
-  body:has(.fab-wrap:not([hidden])) .tabbar { transform: translate(calc(-50% - 31px), 0); }
-  .fab-wrap { left: calc(50% + 87px); }
+  body.has-fab .tabbar { transform: translate(calc(-50% - 30px), 0); }
+  /* Док из пяти иконок (266px) + зазор 10px: «+» вплотную справа, не наезжая. */
+  .fab-wrap { left: calc(50% + 113px); }
   .fab { width: 50px; height: 50px; }
 }
 
@@ -1074,7 +1075,7 @@ body.ed-open { overflow: hidden; }
 .fab-wrap { transition: transform .5s var(--spring), opacity .3s ease; }
 .tabbar.is-hidden ~ .fab-wrap { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
 @media (max-width: 899px) {
-  body:has(.fab-wrap:not([hidden])) .tabbar.is-hidden { transform: translate(calc(-50% - 31px), calc(100% + 40px)); }
+  body.has-fab .tabbar.is-hidden { transform: translate(calc(-50% - 30px), calc(100% + 40px)); }
 }
 @media (min-width: 900px) {
   .tabbar.dock.is-hidden { transform: translateY(-50%); opacity: 1; pointer-events: auto; }
@@ -1131,3 +1132,19 @@ body.ed-open { overflow: hidden; }
   -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); animation: drop-in .3s var(--ease) both; }
 .st-toast[data-error="true"] { color: #ff9b93; border-color: rgba(224, 90, 80, .5); }
 .st-toast[hidden] { display: none; }
+
+/* Mac: вертикальный док выше на одну иконку — «+» ниже него. */
+@media (min-width: 900px) {
+  .fab-wrap { top: calc(50% + 146px); }
+}
+
+/* Компактные плитки на главной в PWA (телефон): больше влезает на экран. */
+@media (max-width: 899px) {
+  .grid { gap: 8px; }
+  .tile { padding: 12px 14px; border-radius: 18px; }
+  .stat { min-height: 0; gap: 4px; }
+  .stat .big { margin-top: 6px; font-size: 30px; }
+  .st-tile-main { margin: 8px 0 8px; gap: 10px; }
+  .st-tile-main .big { font-size: 30px; }
+  .st-tile .next { gap: 6px; }
+}
