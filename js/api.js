@@ -9,6 +9,13 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class StudentExistsError extends Error {
+  constructor() {
+    super('Такой ученик уже есть. Чтобы выдать новый пароль, используйте «Новый пароль».');
+    this.name = 'StudentExistsError';
+  }
+}
+
 async function request(key, route, { method = 'GET', body, query = {} } = {}) {
   let url = `${BASE_URL}?r=${encodeURIComponent(route)}`;
   for (const [name, value] of Object.entries(query)) url += `&${name}=${encodeURIComponent(value)}`;
@@ -28,6 +35,8 @@ async function request(key, route, { method = 'GET', body, query = {} } = {}) {
     throw new Error('Нет связи с сервером');
   }
   if (response.status === 401) throw new UnauthorizedError();
+  // 409 на добавление ученика: сервер не трогает существующего (иначе обнулился бы прогресс).
+  if (response.status === 409 && method === 'POST' && route === 'students') throw new StudentExistsError();
   if (!response.ok) throw new Error(`Сервер ответил ${response.status}`);
   return response;
 }
@@ -70,7 +79,7 @@ export async function saveEvent(key, body) {
 }
 
 // Ученики курса — тот же GET, что CourseCloudClient.fetchStudents в приложении
-// (course: "avanzato" | "davinci"). ТОЛЬКО ЧТЕНИЕ: методов записи для учеников здесь нет.
+// (course: "avanzato" | "davinci").
 export async function listStudents(key, course) {
   const response = await request(key, 'students', { query: { course } });
   let data;
@@ -80,4 +89,31 @@ export async function listStudents(key, course) {
     throw new Error('Сервер вернул неожиданный ответ');
   }
   return Array.isArray(data) ? data : [];
+}
+
+// Управление учениками — один в один с CourseCloudClient в приложении.
+// Каждый PATCH меняет ровно одно поле; прогресс ученика эти запросы не трогают.
+const studentRoute = (email) => `students/${String(email).toLowerCase()}`;
+
+export async function patchStudent(key, course, email, body) {
+  return request(key, studentRoute(email), { method: 'PATCH', body, query: { course } });
+}
+
+export async function createStudent(key, course, { email, name, password }) {
+  await request(key, 'students', { method: 'POST', body: { email, name: name || '', password }, query: { course } });
+}
+
+export async function deleteStudent(key, course, email) {
+  await request(key, studentRoute(email), { method: 'DELETE', query: { course } });
+}
+
+// Новый пароль генерирует сервер и возвращает его в ответе.
+export async function resetStudentPassword(key, course, email) {
+  const response = await patchStudent(key, course, email, { reset_password: true });
+  try {
+    const data = await response.json();
+    return (data && data.password) || '';
+  } catch {
+    return '';
+  }
 }

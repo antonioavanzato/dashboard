@@ -1110,3 +1110,24 @@ body.ed-open { overflow: hidden; }
   .st-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .st-row .st-bar { width: 40px; }
 }
+
+/* Управление учениками */
+.st-head { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.st-card { transition: transform .25s var(--ease); }
+.st-card.is-pressing { transform: scale(.98); }
+.st-menu-sub { margin: 0; color: var(--muted); font-size: 12px; text-align: center; overflow-wrap: anywhere; }
+.st-menu { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.st-menu-item { padding: 14px 16px; background: none; border: 0; border-top: 1px solid var(--border); color: var(--text); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+.st-menu-item:first-child { border-top: 0; }
+.st-menu-item:active { background: rgba(255, 255, 255, .06); }
+.st-menu-item.is-danger { color: rgb(235, 100, 100); }
+.st-menu-cancel { width: 100%; }
+.st-creds { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: baseline; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); }
+.st-creds b { font-weight: 500; overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
+.st-pw-row { align-items: flex-end; }
+.st-gen { flex-shrink: 0; }
+.st-toast { position: fixed; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 1000;
+  padding: 10px 16px; border-radius: 999px; background: rgba(20, 22, 28, .92); border: 1px solid var(--border); color: var(--text); font-size: 13px;
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); animation: drop-in .3s var(--ease) both; }
+.st-toast[data-error="true"] { color: #ff9b93; border-color: rgba(224, 90, 80, .5); }
+.st-toast[hidden] { display: none; }

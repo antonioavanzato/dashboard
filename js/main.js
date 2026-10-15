@@ -4,7 +4,10 @@ if (window.top !== window.self) {
   window.top.location = window.self.location.href;
 }
 
-import { listOrders, listEvents, listStudents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError } from './api.js';
+import {
+  listOrders, listEvents, listStudents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError,
+  patchStudent, createStudent, deleteStudent, resetStudentPassword,
+} from './api.js';
 import {
   setEvents, eventsCount, allEvents, getCreateActions, renderPlanner, resetPlanner, setPlannerHandlers, findEvent, eventBody,
 } from './planner.js';
@@ -17,7 +20,9 @@ import { hasLock, clearLock, unlock, enableLock } from './lock.js';
 import { renderHome, renderStudentsTile } from './home.js';
 import {
   setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
+  setStudentHandlers, studentExists, courseTitle, isAdminEmail,
 } from './students.js';
+import { openAddStudent } from './student-actions.js';
 import './sheet-swipe.js';
 import {
   showAuthScreen,
@@ -74,7 +79,7 @@ function applyView() {
   document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
   document.getElementById('list-screen').dataset.view = view;
-  document.getElementById('fab-wrap').hidden = !isPlanner;
+  document.getElementById('fab-wrap').hidden = !(isPlanner || view === 'students');
   document.getElementById('tabbar').classList.remove('is-hidden');
   closeFab();
   document.getElementById('title').textContent = isPlanner ? 'Планер' : view === 'students' ? 'Ученики' : 'Заявки';
@@ -300,6 +305,48 @@ async function pollStudents({ throttle = false } = {}) {
   }
 }
 
+// Управление учениками — те же запросы, что CourseCloudClient в приложении.
+// Курс фиксируется в момент открытия меню; после успеха список перечитывается из облака.
+function studentCall(fn) {
+  return async (...args) => {
+    const key = loadKey();
+    if (!key) throw new Error('Нужно войти заново');
+    const course = currentCourse();
+    try {
+      return await fn(key, course, ...args);
+    } catch (error) {
+      handleError(error); // 401 — выход на экран ключа
+      throw error;
+    } finally {
+      lastStudentsFetch = 0;
+      pollStudents();
+    }
+  };
+}
+
+setStudentHandlers({
+  setActive: studentCall((key, course, email, active) => {
+    if (isAdminEmail(email)) throw new Error('Админа блокировать нельзя');
+    return patchStudent(key, course, email, { active });
+  }),
+  setDavinci: studentCall((key, course, email, enabled) => patchStudent(key, course, email, { davinci_module: enabled })),
+  saveNotes: studentCall((key, course, email, notes) => patchStudent(key, course, email, { notes })),
+  resetPassword: studentCall((key, course, email) => resetStudentPassword(key, course, email)),
+  // Админа (свой аккаунт) не удаляем и не блокируем — как в приложении.
+  remove: studentCall((key, course, email) => {
+    if (isAdminEmail(email)) throw new Error('Админа удалить нельзя');
+    return deleteStudent(key, course, email);
+  }),
+});
+
+function openAddStudentSheet() {
+  openAddStudent({
+    courseTitle: courseTitle(),
+    exists: (email) => studentExists(email),
+    create: studentCall((key, course, data) => createStudent(key, course, data)),
+  });
+}
+
 // Переключатель курса (на плитке и в разделе): незагруженный курс подтягиваем сразу.
 function onPickCourse(id) {
   if (id === currentCourse()) return;
@@ -435,7 +482,9 @@ function closeFab() {
 fab.addEventListener('click', (e) => {
   e.stopPropagation();
   if (!fabMenu.hidden) return closeFab();
-  const actions = getCreateActions();
+  const actions = view === 'students'
+    ? [{ label: 'Ученик', run: openAddStudentSheet }]
+    : getCreateActions();
   if (actions.length === 1) return actions[0].run();
   fabMenu.replaceChildren(...actions.map((a) => {
     const b = document.createElement('button');

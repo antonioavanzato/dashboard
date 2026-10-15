@@ -1,8 +1,8 @@
-// Ученики курсов — ТОЛЬКО ЧТЕНИЕ.
-// Тот же GET ?r=students&course=…, что CourseCloudClient.fetchStudents в приложении.
-// Дашборд учеников не создаёт, не меняет и не удаляет — ни одного PATCH/POST/DELETE.
+// Ученики курсов. Список — тот же GET ?r=students&course=…, что CourseCloudClient.fetchStudents.
+// Управление — долгий тап по ученику (как контекстное меню в приложении), окна в student-actions.js.
 // Разбор прогресса повторяет CourseCloudClient.makeStudent / parseProgress.
 // Данные живут только в памяти вкладки.
+import { openStudentMenu } from './student-actions.js';
 
 export const COURSES = [
   { id: 'avanzato', label: 'Модульное', title: 'Модульное обучение', totalLessons: 13 },
@@ -15,6 +15,12 @@ const ONLINE_MS = 180 * 1000; // как CourseStudent.isOnline
 const data = { avanzato: null, davinci: null }; // null — ещё не загружено
 let course = 'avanzato';
 let expanded = null;
+let handlers = null; // { setActive, setDavinci, remove, resetPassword, saveNotes } из main.js
+
+export function setStudentHandlers(h) { handlers = h; }
+export const isAdminEmail = (email) => email === ADMIN;
+export const studentExists = (email, id = course) => (data[id] || []).some((s) => s.id === email);
+export const courseTitle = (id = course) => COURSES.find((c) => c.id === id).title;
 
 export const currentCourse = () => course;
 export function setCourse(id) { course = id; expanded = null; }
@@ -164,7 +170,41 @@ function studentCard(s, rerender) {
   const right = el('span', 'st-right');
   right.append(el('span', 'mono st-count', `${s.completed}/${s.total}`), progressBar(s.progress));
   head.append(dot, text, right);
+  // Долгий тап (iPhone) или правый клик (Mac) — меню действий, обычный тап — подробности.
+  let pressTimer = null;
+  let longPressed = false;
+  let startPoint = null;
+  const openMenu = () => {
+    if (!handlers) return;
+    openStudentMenu({ student: s, course, courseTitle: courseTitle(), isAdmin: s.id === ADMIN, handlers });
+  };
+  const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; card.classList.remove('is-pressing'); };
+  head.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    longPressed = false;
+    startPoint = [e.clientX, e.clientY];
+    card.classList.add('is-pressing');
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      cancelPress();
+      if (navigator.vibrate) navigator.vibrate(10);
+      openMenu();
+    }, 500);
+  });
+  head.addEventListener('pointermove', (e) => {
+    if (pressTimer && startPoint && Math.hypot(e.clientX - startPoint[0], e.clientY - startPoint[1]) > 10) cancelPress();
+  });
+  head.addEventListener('pointerup', cancelPress);
+  head.addEventListener('pointercancel', cancelPress);
+  head.addEventListener('pointerleave', cancelPress);
+  head.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (longPressed) return;
+    cancelPress();
+    openMenu();
+  });
   head.addEventListener('click', () => {
+    if (longPressed) { longPressed = false; return; }
     expanded = expanded === s.id ? null : s.id;
     rerender();
   });
