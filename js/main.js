@@ -18,6 +18,7 @@ import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
 import { renderHome, renderStudentsTile, setHomeNavigate } from './home.js';
+import { renderOrderDots } from './dots.js';
 import {
   setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
   setStudentHandlers, studentExists, courseTitle, isAdminEmail,
@@ -126,6 +127,7 @@ function render() {
     render();
   });
   renderList(orders, filterState, { onStatusChange, onDelete });
+  renderOrderDots(document.getElementById('ordersDots'), orders);
 }
 
 function logout() {

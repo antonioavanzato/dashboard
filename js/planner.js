@@ -323,9 +323,43 @@ export function getCreateActions() {
   return createActions;
 }
 
+// Неделя выбранного дня столбиками точек (как «год точками» на главной):
+// точка = событие (до 4), кольцо = есть задачи, мятный = выбранный день. Нажатие — открыть день.
+function renderWeek(root) {
+  const monday = new Date(selected);
+  monday.setDate(selected.getDate() - ((selected.getDay() + 6) % 7));
+  const today = startOfDay(new Date());
+  const wrap = element('section', 'tile wide week-dots');
+  const strip = element('div', 'week-dots-row');
+  let total = 0;
+  for (let i = 0; i < 7; i += 1) {
+    const day = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const count = eventsOn(day).filter((e) => e.status !== 'cancelled').length;
+    total += count;
+    const col = element('button', 'week-col');
+    col.type = 'button';
+    if (sameDay(day, selected)) col.setAttribute('aria-pressed', 'true');
+    if (sameDay(day, today)) col.classList.add('is-today');
+    const dots = element('span', 'week-col-dots');
+    for (let k = 0; k < 4; k += 1) dots.append(element('i', k < count ? 'on' : ''));
+    if (handlers.hasTasks && handlers.hasTasks(day)) dots.append(element('i', 'task'));
+    col.append(dots, element('span', 'week-col-day', new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(day)));
+    col.addEventListener('click', () => {
+      selected = day;
+      renderPlanner();
+    });
+    strip.append(col);
+  }
+  const head = element('div', 'dots-head');
+  head.append(element('span', 'label', 'Неделя'), element('span', 'mono sub', String(total)));
+  wrap.append(head, strip);
+  root.append(wrap);
+}
+
 export function renderPlanner() {
   const root = document.getElementById('planner');
   root.replaceChildren();
+  renderWeek(root);
   renderCalendar(root);
 
   // Один день — одна лента: события и задачи вместе, по времени.

@@ -374,6 +374,22 @@ function filterChips() {
   return nav;
 }
 
+// Модули точками (вместо кольца): светлая — пройден, мятная — изучает сейчас, тусклая — впереди.
+// У «Модульного обучения» 9 модулей; если модулей с сайта нет — точка на урок.
+function moduleDots(s) {
+  const byModules = course === 'avanzato' || s.modules.length > 0;
+  const count = course === 'avanzato' ? AVANZATO_MODULES.length : (s.modules.length || s.total);
+  const done = (i) => (byModules ? Boolean(s.modules[i]) : i < s.completed) || s.progress >= 1;
+  let current = -1;
+  if (s.progress < 1) for (let i = 0; i < count; i += 1) if (!done(i)) { current = i; break; }
+  const wrap = el('span', 'st-mdots');
+  wrap.setAttribute('aria-label', `Прогресс ${Math.round(s.progress * 100)} процентов`);
+  for (let i = 0; i < count; i += 1) wrap.append(el('i', done(i) ? 'is-done' : i === current ? 'is-current' : ''));
+  const box = el('span', 'st-mdots-box');
+  box.append(wrap, el('span', 'mono st-mdots-pct', s.progress >= 1 ? '✓' : `${Math.round(s.progress * 100)}%`));
+  return box;
+}
+
 function listCard(s) {
   const card = el('article', 'st-card');
   if (!s.active) card.classList.add('is-blocked');
@@ -389,7 +405,7 @@ function listCard(s) {
     meta.append(el('span', 'st-dot-sep', '·'), el('span', 'st-card-module', moduleTitle(s.currentModule)));
   }
   main.append(top, el('span', 'st-card-email', s.id), meta);
-  card.append(avatar(s, 46), main, s.progress >= 1 ? seal(44) : ring(s.progress, 44));
+  card.append(avatar(s, 46), main, moduleDots(s));
   pressable(card, () => openStudent(s.id), () => openStudentMenu(ctx(s)));
   return card;
 }
