@@ -1089,28 +1089,14 @@ body.ed-open { overflow: hidden; }
 .st-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .5s var(--ease); }
 .st-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: rgba(255, 255, 255, .18); }
 .st-dot[data-online="true"] { background: var(--accent); }
-.st-head { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.st-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-.st-count { font-size: 12px; color: var(--muted); }
-.st-card.is-inactive { opacity: .55; }
-.st-list { display: flex; flex-direction: column; gap: 8px; }
-.st-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.st-stat { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
-.st-stat b { font-size: 22px; font-weight: 400; }
-.st-stat .sub { font-size: 11px; color: var(--muted); }
-.st-mods { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.st-mods i { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--border); }
-.st-mods i.done { background: var(--accent); border-color: var(--accent); }
 .st-switch { padding: 0; }
 .st-switch .tab { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
 .st-row .next-title { flex: 1; min-width: 0; }
 @media (max-width: 480px) {
-  .st-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .st-row .st-bar { width: 40px; }
 }
 
 /* Управление учениками */
-.st-head { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .st-card { transition: transform .25s var(--ease); }
 .st-card.is-pressing { transform: scale(.98); }
 .st-menu-sub { margin: 0; color: var(--muted); font-size: 12px; text-align: center; overflow-wrap: anywhere; }
@@ -1200,3 +1186,118 @@ body.ed-open { overflow: hidden; }
 .tile::before { content: none; }
 /* Цветных пятен на фоне нет: ровный тёмный фон. */
 .aurora { display: none; }
+
+/* ============================================================
+   Ученики — список и карточка один в один с приложением (students.js)
+   ============================================================ */
+.st-online-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.st-online-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(124, 240, 197, .1); font-size: 13px; font-weight: 600; }
+.st-online-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.st-course-switch { margin-bottom: 12px; }
+.st-overview { display: flex; align-items: center; gap: 20px; padding: 16px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); }
+.st-overview-stats { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.st-overview-row { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.st-overview-row b { font-size: 20px; font-weight: 500; color: var(--text); }
+.st-add { width: 100%; height: 50px; border-radius: 16px; margin-bottom: 14px; font-size: 15px; }
+.st-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.st-section-title { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.st-section-count { font-size: 12px; color: var(--accent); }
+.st-attention { margin-bottom: 14px; }
+.st-attention-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.st-attention-row::-webkit-scrollbar { display: none; }
+.st-attention-chip { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 5px 14px 5px 5px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.st-attention-text { display: flex; flex-direction: column; max-width: 150px; }
+.st-attention-text b { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-attention-text small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.st-search { display: flex; gap: 8px; margin-bottom: 10px; }
+.st-search-field { flex: 1; min-width: 0; }
+.st-search-input { width: 100%; height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255, 255, 255, .06);
+  color: var(--text); font: inherit; font-size: 16px; outline: none; }
+.st-search-input:focus { border-color: var(--accent); }
+.st-sort-wrap { position: relative; flex-shrink: 0; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255, 255, 255, .06);
+  display: grid; place-items: center; }
+.st-sort-icon { font-size: 17px; color: var(--text); pointer-events: none; }
+.st-sort { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+.st-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 12px; }
+.st-filters::-webkit-scrollbar { display: none; }
+.st-filter { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: rgba(255, 255, 255, .05); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.st-filter[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: #000; }
+.st-filter-count { padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, .1); font-size: 11px; }
+.st-filter[aria-pressed="true"] .st-filter-count { background: rgba(0, 0, 0, .14); }
+.st-list { display: flex; flex-direction: column; gap: 8px; }
+.st-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface);
+  cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.st-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.st-card-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.st-card-name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-card-email { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-card-meta { display: flex; gap: 5px; font-size: 12px; color: rgba(255, 255, 255, .45); min-width: 0; }
+.st-card-module { color: rgba(255, 255, 255, .65); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-online { color: var(--accent); }
+.is-accent { color: var(--accent); }
+.st-badge { flex-shrink: 0; padding: 2px 6px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+.st-badge--author, .st-badge--dv { color: var(--text); background: rgba(255, 255, 255, .12); }
+.st-badge--blocked { color: rgb(235, 100, 100); background: rgba(235, 100, 100, .14); }
+.st-avatar { position: relative; flex-shrink: 0; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .12); font-size: calc(var(--size) * .4); font-weight: 600; }
+.st-avatar.is-admin { background: var(--text); color: #000; }
+.st-avatar.is-blocked { opacity: .5; }
+.st-avatar-dot { position: absolute; right: 0; bottom: 0; width: 26%; height: 26%; border-radius: 50%; background: var(--accent); border: 2px solid #000; }
+.st-ring { position: relative; flex-shrink: 0; width: var(--size); height: var(--size); display: grid; place-items: center; }
+.st-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.st-ring circle { fill: none; stroke-width: 3.2; }
+.st-ring .bg { stroke: rgba(255, 255, 255, .08); }
+.st-ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dasharray .6s var(--ease); }
+.st-ring-text { position: relative; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.st-ring-text b { font-size: calc(var(--size) * .24); font-weight: 600; }
+.st-ring-text small { font-size: 11px; color: var(--muted); }
+.st-seal { flex-shrink: 0; width: var(--size); height: var(--size); display: grid; place-items: center; border-radius: 50%;
+  background: rgba(124, 240, 197, .12); color: var(--accent); font-size: calc(var(--size) * .45); font-weight: 600; }
+.st-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 36px 0; color: var(--muted); }
+.st-empty p { margin: 0; font-size: 16px; font-weight: 600; }
+.st-link { background: none; border: 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+/* Карточка ученика */
+.st-back { background: none; border: 0; padding: 4px 0 12px; color: var(--accent); font: inherit; font-size: 15px; cursor: pointer; }
+.st-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 14px; text-align: center; }
+.st-hero-name { margin: 6px 0 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+.st-hero-email { background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+.st-hero-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
+.st-chip { padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, .08); font-size: 12px; font-weight: 600; }
+.st-chip.is-danger { color: rgb(235, 100, 100); background: rgba(235, 100, 100, .12); }
+.st-chip.is-online { color: var(--accent); background: rgba(124, 240, 197, .1); }
+.st-panel { padding: 16px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); }
+.st-progress, .st-dv { display: flex; align-items: center; gap: 18px; }
+.st-progress-facts { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.st-fact { display: flex; flex-direction: column; gap: 1px; }
+.st-fact small, .st-progress-facts > small { font-size: 12px; color: var(--muted); }
+.st-fact b { font-size: 15px; font-weight: 600; }
+.st-fact b.mono { font-size: 20px; }
+.st-dv-status { font-size: 13px; font-weight: 600; color: var(--muted); }
+.st-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.st-action { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px; border: 1px solid var(--border); border-radius: 18px;
+  background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.st-action b { font-size: 15px; font-weight: 600; }
+.st-action small { font-size: 12px; color: var(--muted); }
+.st-action--danger b { color: rgb(235, 100, 100); }
+.st-action--online b { color: var(--accent); }
+.st-action:active, .st-card:active, .st-attention-chip:active { transform: scale(.98); }
+.st-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.st-step { display: flex; align-items: center; gap: 12px; }
+.st-step-mark { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .05);
+  font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, .35); }
+.st-step.is-done .st-step-mark { background: var(--accent); color: #000; }
+.st-step.is-current .st-step-mark { border: 1.5px solid var(--accent); color: var(--accent); background: rgba(255, 255, 255, .1); }
+.st-step div { display: flex; flex-direction: column; }
+.st-step b { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, .45); }
+.st-step.is-done b, .st-step.is-current b { color: var(--text); }
+.st-step small { font-size: 12px; color: rgba(255, 255, 255, .35); }
+.st-step.is-current small { color: var(--accent); }
+.st-info { display: flex; flex-direction: column; gap: 10px; }
+.st-notes-btn { width: 100%; display: flex; gap: 10px; background: none; border: 0; padding: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.st-notes-text { flex: 1; font-size: 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.st-notes-edit { color: var(--accent); }
+.st-notes-empty { font-size: 14px; color: var(--muted); }
+.st-delete { width: 100%; height: 48px; margin: 6px 0 10px; border: 0; border-radius: 16px; background: rgba(235, 100, 100, .1); color: rgb(235, 100, 100);
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }

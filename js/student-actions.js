@@ -49,7 +49,7 @@ export function toast(text, isError = false) {
   toastTimer = setTimeout(() => { node.hidden = true; }, 2200);
 }
 
-async function copy(text) {
+export async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
     return true;
@@ -78,53 +78,31 @@ async function run(buttons, action, okText, errText) {
 }
 
 /**
- * Меню действий ученика (долгий тап / правый клик).
+ * Меню долгого тапа — как contextActions(for:) в CourseManagementView:
+ * скопировать email, модуль DaVinci (только «Модульное обучение»), блокировка, удаление.
  * ctx: { student, course, courseTitle, isAdmin, handlers }
- * handlers: { setActive, setDavinci, remove, resetPassword, saveNotes }
  */
 export function openStudentMenu(ctx) {
-  const { student: s, course, isAdmin, handlers } = ctx;
-  const who = s.name || s.id;
-  const { body, close, open } = sheet(who);
+  const { student: s, course, isAdmin } = ctx;
+  const { body, close, open } = sheet(s.name || s.id);
   body.append(element('p', 'st-menu-sub', s.id));
   const list = element('div', 'st-menu');
   const item = (text, onClick, danger = false) => {
     const b = button(text, `st-menu-item${danger ? ' is-danger' : ''}`);
-    b.addEventListener('click', onClick);
+    b.addEventListener('click', () => { close(); onClick(); });
     list.append(b);
   };
-
-  item('Скопировать email', async () => {
-    close();
-    toast(await copy(s.id) ? 'Email скопирован' : 'Не удалось скопировать');
-  });
-  item('Заметка', () => { close(); openNotes(ctx); });
-  item('Выдать новый пароль', () => {
-    close();
-    if (!confirm(`Выдать новый пароль?\n\nСтарый пароль ${who} перестанет работать.`)) return;
-    resetPassword(ctx);
-  });
-  // Доп-модуль DaVinci — только в «Модульном обучении».
+  item('Скопировать email', async () => toast(await copyText(s.id) ? 'Email скопирован' : 'Не удалось скопировать'));
   if (course === 'avanzato') {
-    item(s.davinciModule ? 'Закрыть модуль DaVinci' : 'Открыть модуль DaVinci', async () => {
-      close();
+    item(s.davinciModule ? 'Закрыть модуль DaVinci' : 'Открыть модуль DaVinci', () => {
       const next = !s.davinciModule;
-      await run([], () => handlers.setDavinci(s.id, next),
+      run([], () => ctx.handlers.setDavinci(s.id, next),
         next ? 'Модуль DaVinci открыт' : 'Модуль DaVinci закрыт', 'Не удалось изменить доступ к DaVinci');
     });
   }
   if (!isAdmin) {
-    item(s.active ? 'Заблокировать' : 'Разблокировать', async () => {
-      close();
-      if (s.active && !confirm(`Заблокировать доступ?\n\n${who} не сможет войти в курс. Прогресс сохранится, доступ можно вернуть в любой момент.`)) return;
-      await run([], () => handlers.setActive(s.id, !s.active),
-        s.active ? 'Доступ заблокирован' : 'Доступ открыт', 'Не удалось изменить доступ');
-    });
-    item('Удалить', async () => {
-      close();
-      if (!confirm(`Удалить ученика?\n\nУченик ${who} и весь его прогресс будут удалены. Это действие нельзя отменить.`)) return;
-      await run([], () => handlers.remove(s.id), 'Ученик удалён', 'Не удалось удалить ученика');
-    }, true);
+    item(s.active ? 'Заблокировать' : 'Разблокировать', () => confirmBlock(ctx, s.name || s.id));
+    item('Удалить', () => confirmDelete(ctx, `Ученик ${s.name || s.id}`), true);
   }
   const cancel = button('Отмена', 'button st-menu-cancel');
   cancel.addEventListener('click', close);
@@ -132,9 +110,29 @@ export function openStudentMenu(ctx) {
   open();
 }
 
-function openNotes(ctx) {
+// Блокировка — с подтверждением; разблокировка — сразу (как в приложении).
+export async function confirmBlock(ctx, who) {
+  const s = ctx.student;
+  if (s.active && !confirm(`Заблокировать доступ?\n\n${who} не сможет войти в курс. Прогресс сохранится, доступ можно вернуть в любой момент.`)) return;
+  await run([], () => ctx.handlers.setActive(s.id, !s.active),
+    s.active ? 'Доступ заблокирован' : 'Доступ открыт', 'Не удалось изменить доступ');
+}
+
+// who: «Ученик Имя» из списка или «Имя» из карточки — тексты как в двух экранах приложения.
+export async function confirmDelete(ctx, who, after) {
+  if (!confirm(`Удалить ученика?\n\n${who} и весь его прогресс будут удалены. Это действие нельзя отменить.`)) return;
+  const ok = await run([], () => ctx.handlers.remove(ctx.student.id), 'Ученик удалён', 'Не удалось удалить ученика');
+  if (ok && after) after();
+}
+
+export function confirmResetPassword(ctx) {
+  if (!confirm('Выдать новый пароль?\n\nСтарый пароль перестанет работать, ученик выйдет из курса на всех устройствах. Прогресс сохранится.')) return;
+  resetPassword(ctx);
+}
+
+export function openNotesEditor(ctx) {
   const { student: s, handlers } = ctx;
-  const { body, close, open } = sheet('Заметка');
+  const { body, close, open } = sheet('Заметки');
   const area = element('textarea', 'ed-input ed-notes');
   area.value = s.notes || '';
   area.rows = 6;
@@ -179,7 +177,7 @@ function showCredentials(title, subtitle, email, password, courseTitle) {
   }
   const copyBtn = button('Скопировать', 'button button--primary');
   copyBtn.addEventListener('click', async () => {
-    toast(await copy(text) ? 'Логин и пароль скопированы' : 'Не удалось скопировать');
+    toast(await copyText(text) ? 'Логин и пароль скопированы' : 'Не удалось скопировать');
   });
   actions.append(copyBtn);
   body.append(card, actions);
@@ -253,7 +251,7 @@ export function openAddStudent(ctx) {
     try {
       await ctx.create(data);
       close();
-      showCredentials('Ученик добавлен', ctx.courseTitle, data.email, data.password, ctx.courseTitle);
+      showCredentials('Ученик добавлен', 'Отправьте ему данные для входа', data.email, data.password, ctx.courseTitle);
     } catch (err) {
       add.textContent = 'Добавить';
       cancel.disabled = false;

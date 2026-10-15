@@ -82,7 +82,8 @@ function applyView() {
   document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
   document.getElementById('list-screen').dataset.view = view;
-  const showFab = isPlanner || view === 'students';
+  // «+» только в Планере; ученики добавляются кнопкой «Добавить ученика», как в приложении.
+  const showFab = isPlanner;
   document.getElementById('fab-wrap').hidden = !showFab;
   // Класс вместо :has(): Safari не всегда пересчитывает :has() при смене hidden,
   // и пилюля не отодвигалась — «+» ложился на неё.
@@ -342,6 +343,7 @@ setStudentHandlers({
   saveNotes: studentCall((key, course, email, notes) => patchStudent(key, course, email, { notes })),
   resetPassword: studentCall((key, course, email) => resetStudentPassword(key, course, email)),
   // Админа (свой аккаунт) не удаляем и не блокируем — как в приложении.
+  add: () => openAddStudentSheet(),
   remove: studentCall((key, course, email) => {
     if (isAdminEmail(email)) throw new Error('Админа удалить нельзя');
     return deleteStudent(key, course, email);
@@ -491,9 +493,7 @@ function closeFab() {
 fab.addEventListener('click', (e) => {
   e.stopPropagation();
   if (!fabMenu.hidden) return closeFab();
-  const actions = view === 'students'
-    ? [{ label: 'Ученик', run: openAddStudentSheet }]
-    : getCreateActions();
+  const actions = getCreateActions();
   if (actions.length === 1) return actions[0].run();
   fabMenu.replaceChildren(...actions.map((a) => {
     const b = document.createElement('button');
