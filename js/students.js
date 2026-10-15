@@ -34,6 +34,7 @@ let activeFilter = 'all';
 let sortMode = 'recent';
 let handlers = null;      // { setActive, setDavinci, remove, resetPassword, saveNotes, add } из main.js
 let rootNode = null;
+let readyTimer = null;
 let pickCourse = () => {};
 
 export function setStudentHandlers(h) { handlers = h; }
@@ -289,27 +290,33 @@ function openStudent(id) {
 
 // ---------- Список (CourseManagementView.adminDashboard) ----------
 
+// Сводка — мини-виджеты, как на главной. Цифры те же, что в overviewCard приложения;
+// нажатие — быстрый фильтр/сортировка (повторное нажатие снимает).
+function miniStat(label, num, sub, pressed, onTap, live) {
+  const t = button('', 'tile w-mini st-mini');
+  t.setAttribute('aria-pressed', String(pressed));
+  if (live) t.dataset.live = 'true';
+  t.append(el('span', 'label', label), el('b', 'big mono', String(num)), el('span', 'sub', sub));
+  t.addEventListener('click', onTap);
+  return t;
+}
+
 function overviewCard() {
   const s = summary();
-  const card = el('div', 'st-overview');
-  card.append(ring(s.avg / 100, 96, `${s.avg}%`, 'в среднем'));
-  const stats = el('div', 'st-overview-stats');
-  const stat = (value, title) => {
-    const row = el('div', 'st-overview-row');
-    row.append(el('b', 'mono', String(value)), el('span', null, title));
-    return row;
-  };
-  stats.append(
-    stat(s.total, plural(s.total, 'ученик', 'ученика', 'учеников')),
-    stat(s.online, 'учеников онлайн'),
-    stat(s.finished, s.finished === 1 ? 'прошёл курс' : 'прошли курс'),
+  const grid = el('div', 'w-grid st-overview-grid');
+  grid.append(
+    miniStat('Ученики', s.total, plural(s.total, 'ученик', 'ученика', 'учеников'), activeFilter === 'all' && sortMode === 'recent',
+      () => { activeFilter = 'all'; sortMode = 'recent'; rerender(); }),
+    miniStat('Онлайн', s.online, 'учеников онлайн', activeFilter === 'online',
+      () => { activeFilter = activeFilter === 'online' ? 'all' : 'online'; rerender(); }, s.online > 0),
+    miniStat('В среднем', `${s.avg}%`, `прошли курс: ${s.finished}`, sortMode === 'progress',
+      () => { sortMode = sortMode === 'progress' ? 'recent' : 'progress'; rerender(); }),
   );
-  card.append(stats);
-  return card;
+  return grid;
 }
 
 function attentionSection(list) {
-  const wrap = el('section', 'st-attention');
+  const wrap = el('section', 'tile wide w-wide st-attention');
   const head = el('div', 'st-section-head');
   head.append(el('span', 'st-section-title', 'Давно не заходили'), el('span', 'mono st-section-count', String(list.length)));
   const row = el('div', 'st-attention-row');
@@ -388,21 +395,13 @@ function listCard(s) {
 }
 
 function renderList(root) {
-  const s = summary();
-  if (s.online > 0) {
-    const badgeRow = el('div', 'st-online-row');
-    const b = el('span', 'st-online-badge');
-    b.append(el('i'), el('span', null, `${s.online} онлайн`));
-    badgeRow.append(b);
-    root.append(badgeRow);
-  }
   root.append(courseSwitch(pickCourse, 'tabs st-course-switch', true));
   if (!studentsLoaded()) {
     root.append(el('p', 'empty', 'Загрузка…'));
     return;
   }
   root.append(overviewCard());
-  const add = button('Добавить ученика', 'button button--primary st-add');
+  const add = button('＋  Добавить ученика', 'tile wide st-add');
   add.addEventListener('click', () => handlers?.add());
   root.append(add);
 
@@ -438,7 +437,7 @@ function sectionTitle(text, trailing) {
 }
 
 function actionTile(title, subtitle, onClick, kind = '') {
-  const b = button('', `st-action${kind ? ` st-action--${kind}` : ''}`);
+  const b = button('', `tile st-action${kind ? ` st-action--${kind}` : ''}`);
   b.append(el('b', null, title), el('small', null, subtitle));
   b.addEventListener('click', onClick);
   return b;
@@ -457,36 +456,44 @@ function renderDetail(root, s) {
 
   // Шапка: аватар, имя, email (тап — скопировать), статусы.
   const hero = el('section', 'st-hero');
+  const heroText = el('div', 'st-hero-text');
   const email = button(`${s.id}  ⧉`, 'st-hero-email');
   email.addEventListener('click', async () => toast(await copyText(s.id) ? 'Email скопирован' : 'Не удалось скопировать', false));
   const chips = el('div', 'st-hero-chips');
   chips.append(el('span', `st-chip${s.active ? '' : ' is-danger'}`, s.active ? 'Доступ открыт' : 'Заблокирован'));
   if (isOnline(s)) chips.append(el('span', 'st-chip is-online', 'Онлайн'));
   if (s.davinciModule) chips.append(el('span', 'st-chip', 'DaVinci'));
-  hero.append(avatar(s, 84), el('h2', 'st-hero-name', displayName(s)), email, chips);
+  heroText.append(el('h2', 'st-hero-name', displayName(s)), email, chips);
+  hero.append(avatar(s, 64), heroText);
   root.append(hero);
 
-  // Прогресс.
-  const prog = el('section', 'st-panel st-progress');
-  prog.append(s.progress >= 1 ? seal(100) : ring(s.progress, 100, null, 'пройдено'));
-  const facts = el('div', 'st-progress-facts');
-  const fact = (label, value, cls) => {
-    const f = el('div', 'st-fact');
-    f.append(el('small', null, label), el('b', cls || '', value));
-    return f;
+  // Прогресс — мини-виджеты, как на главной.
+  const pg = el('div', 'w-grid st-detail-grid');
+  const tileStat = (label, node, sub) => {
+    const t = el('div', 'tile w-mini st-mini is-static');
+    t.append(el('span', 'label', label), node, el('span', 'sub', sub));
+    return t;
   };
-  facts.append(fact(s.progress >= 1 ? 'Курс пройден' : 'Модулей пройдено', `${completedModules} из ${totalModules}`, 'mono'));
-  if (currentIndex !== null) facts.append(fact('Сейчас изучает', moduleTitle(currentIndex), 'is-accent'));
-  facts.append(fact('Последний визит', isOnline(s) ? 'сейчас на сайте' : lastSeenText(s), isOnline(s) ? 'is-online' : ''));
-  prog.append(facts);
-  root.append(prog);
+  pg.append(
+    tileStat(s.progress >= 1 ? 'Курс' : 'Пройдено', el('b', 'big mono', s.progress >= 1 ? '✓' : `${Math.round(s.progress * 100)}%`),
+      s.progress >= 1 ? 'пройден' : `уроков ${s.completed} из ${s.total}`),
+    tileStat('Модули', el('b', 'big mono', `${completedModules}/${totalModules}`), s.progress >= 1 ? 'курс пройден' : 'пройдено'),
+    tileStat('Визит', el('b', `big st-visit${isOnline(s) ? ' is-online' : ''}`, isOnline(s) ? 'сейчас' : (s.lastSeen ? lastSeenText(s).replace(' назад', '') : '—')),
+      isOnline(s) ? 'на сайте' : (s.lastSeen ? 'назад' : 'Никогда')),
+  );
+  root.append(pg);
+  if (currentIndex !== null) {
+    const cur = el('div', 'tile wide w-wide st-current');
+    cur.append(el('span', 'label', 'Сейчас изучает'), el('b', 'is-accent', moduleTitle(currentIndex)));
+    root.append(cur);
+  }
 
   // Доп-модуль DaVinci (только «Модульное обучение»).
   if (course === 'avanzato' && s.davinciModule) {
     const done = s.davinciChecksDone;
     const total = Math.max(s.davinciChecksTotal, 1);
     const status = done === 0 ? ['Не начат', ''] : done >= total ? ['Задание выполнено', 'is-online'] : ['В процессе', 'is-accent'];
-    const dv = el('section', 'st-panel st-dv');
+    const dv = el('section', 'tile wide w-wide st-dv');
     const text = el('div', 'st-progress-facts');
     text.append(el('b', null, 'DaVinci Resolve 21'), el('small', null, `Доп-модуль открыт · чек-лист ${done} из ${total}`),
       el('span', `st-dv-status ${status[1]}`, status[0]));
@@ -519,7 +526,7 @@ function renderDetail(root, s) {
 
   // По модулям.
   if (s.modules.length) {
-    const mods = el('section', 'st-panel');
+    const mods = el('section', 'tile wide w-wide st-mods-tile');
     mods.append(sectionTitle('По модулям', `${completedModules}/${s.modules.length}`));
     const list = el('ol', 'st-timeline');
     s.modules.forEach((done, i) => {
@@ -534,7 +541,7 @@ function renderDetail(root, s) {
   }
 
   // Сведения.
-  const info = el('section', 'st-panel st-info');
+  const info = el('section', 'tile wide w-wide st-info');
   const infoRow = (label, value) => {
     const r = el('div', 'ev-row');
     r.append(el('span', 'ev-row-label', label), el('span', 'ev-row-value', value));
@@ -548,7 +555,7 @@ function renderDetail(root, s) {
   root.append(info);
 
   // Заметки.
-  const notes = el('section', 'st-panel st-notes');
+  const notes = el('section', 'tile wide w-wide st-notes');
   notes.append(sectionTitle('Заметки'));
   const notesBtn = button('', 'st-notes-btn');
   if (s.notes) notesBtn.append(el('span', 'st-notes-text', s.notes), el('span', 'st-notes-edit', '✎'));
@@ -570,6 +577,7 @@ function renderDetail(root, s) {
 export function renderStudents(root, onPickCourse) {
   rootNode = root;
   pickCourse = onPickCourse;
+  root.classList.add('st-root');
   // Опрос облака перерисовывает раздел каждые 20 с — поле поиска не должно терять фокус и курсор.
   const focused = document.activeElement?.classList?.contains('st-search-input') ? document.activeElement : null;
   const caret = focused ? focused.selectionStart : null;
@@ -579,6 +587,11 @@ export function renderStudents(root, onPickCourse) {
   else {
     openedId = null;
     renderList(root);
+  }
+  // Плитки «выезжают» только при первом показе раздела, не при каждой перерисовке
+  // (поиск, фильтры, опрос облака) — как на главной.
+  if (!root.dataset.ready && !readyTimer && root.offsetParent !== null) {
+    readyTimer = setTimeout(() => { root.dataset.ready = 'true'; }, 900);
   }
   if (focused) {
     const input = root.querySelector('.st-search-input');

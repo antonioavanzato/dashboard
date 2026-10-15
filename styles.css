@@ -1301,3 +1301,41 @@ body.ed-open { overflow: hidden; }
 .st-notes-empty { font-size: 14px; color: var(--muted); }
 .st-delete { width: 100%; height: 48px; margin: 6px 0 10px; border: 0; border-radius: 16px; background: rgba(235, 100, 100, .1); color: rgb(235, 100, 100);
   font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+/* ============================================================
+   Ученики в стиле главной: мини-виджеты, плитки, компактные карточки
+   ============================================================ */
+.st-root[data-ready] .tile { animation: none; }
+.st-root .tile { cursor: pointer; }
+.st-course-switch { margin-bottom: 10px; }
+.st-overview-grid, .st-detail-grid { margin-bottom: 8px; }
+.st-mini { font: inherit; color: var(--text); text-align: left; }
+.st-mini[data-live="true"] .big { color: var(--accent); }
+.st-mini.is-static { cursor: default; }
+.st-mini .big.st-visit { font-size: 18px; margin-top: 10px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.st-add { display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; margin: 0 0 8px; padding: 0;
+  color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; }
+.st-attention { margin-bottom: 8px; padding: 12px 14px; }
+.st-search { margin: 4px 0 8px; }
+.st-search-input, .st-sort-wrap { border-radius: 14px; background: var(--surface); }
+.st-list { gap: 6px; }
+.st-card { padding: 10px 12px; border-radius: 18px; gap: 12px; transition: transform .4s var(--spring), border-color .3s; }
+.st-card.is-pressing { transform: scale(.97); }
+.st-card .st-avatar { --size: 40px !important; }
+.st-card .st-ring, .st-card .st-seal { --size: 40px !important; }
+.st-card-name { font-size: 14px; }
+/* Карточка ученика */
+.st-hero { flex-direction: row; align-items: center; text-align: left; gap: 14px; margin-bottom: 10px; }
+.st-hero-text { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.st-hero-name { margin: 0; font-size: 22px; }
+.st-hero-email { padding: 0; text-align: left; overflow-wrap: anywhere; }
+.st-hero-chips { justify-content: flex-start; margin-top: 2px; }
+.st-current { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; padding: 12px 14px; cursor: default; }
+.st-current b { font-size: 15px; font-weight: 600; text-align: right; }
+.st-dv, .st-mods-tile, .st-info, .st-notes { margin-bottom: 8px; padding: 12px 14px; cursor: default; }
+.st-dv { display: flex; align-items: center; gap: 14px; }
+.st-actions { gap: 8px; margin-bottom: 8px; }
+.st-action { padding: 12px 14px; border-radius: 18px; transition: transform .4s var(--spring), border-color .3s; }
+.st-action:active { transform: scale(.96); }
+.st-timeline { gap: 8px; }
+.st-step-mark { width: 26px; height: 26px; }

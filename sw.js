@@ -7,7 +7,7 @@
 // проверяет sw.js при каждом запуске (updateViaCache: 'none' в main.js),
 // ставит новую версию в фоне, и страница один раз перезагружается.
 // Так нет ни «неделями старой версии», ни смеси старых и новых файлов.
-const CACHE = 'dashboard-shell-v25';
+const CACHE = 'dashboard-shell-v26';
 const FONTS = 'dashboard-fonts-v1';
 const SHELL = [
   './',
