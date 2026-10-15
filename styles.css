@@ -1101,11 +1101,8 @@ body.ed-open { overflow: hidden; }
 .st-mods { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .st-mods i { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--border); }
 .st-mods i.done { background: var(--accent); border-color: var(--accent); }
-.st-tile .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .st-switch { padding: 0; }
 .st-switch .tab { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
-.st-tile-main { display: flex; align-items: baseline; gap: 12px; margin: 14px 0 12px; flex-wrap: wrap; }
-.st-tile-main .big { margin-top: 0; }
 .st-row .next-title { flex: 1; min-width: 0; }
 @media (max-width: 480px) {
   .st-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1143,8 +1140,48 @@ body.ed-open { overflow: hidden; }
   .grid { gap: 8px; }
   .tile { padding: 12px 14px; border-radius: 18px; }
   .stat { min-height: 0; gap: 4px; }
-  .stat .big { margin-top: 6px; font-size: 30px; }
-  .st-tile-main { margin: 8px 0 8px; gap: 10px; }
-  .st-tile-main .big { font-size: 30px; }
-  .st-tile .next { gap: 6px; }
+}
+
+/* ============================================================
+   Главная из виджетов (home.js): мини 1×1 по три в ряд, широкие, выжимка
+   ============================================================ */
+.hero--compact { display: flex; align-items: center; gap: 14px; padding: 0 2px 14px; }
+.hero--compact .clock { margin: 0; font-size: 46px; line-height: 1; letter-spacing: -.04em; }
+.hero-meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hero--compact .date { font-size: 14px; color: var(--text); }
+.hero--compact .eyebrow { font-size: 10px; }
+.w-root { display: flex; flex-direction: column; gap: 8px; }
+.w-root .tile { cursor: pointer; animation-delay: 0s; }
+.w-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.w-mini { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; padding: 10px 12px; text-align: left;
+  color: var(--text); font: inherit; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.w-mini .label { font-size: 12px; }
+.w-mini .big { margin: 6px 0 2px; font-size: 28px; line-height: 1; }
+.w-mini .sub { font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-mini[aria-pressed="true"] { border-color: var(--accent); }
+.w-mini[data-alert="true"] .big { color: rgb(235, 100, 100); }
+.w-wide, .w-peek { padding: 12px 14px; -webkit-touch-callout: none; }
+.w-wide .row, .w-peek .row { margin-bottom: 8px; }
+.w-peek { cursor: default; animation: drop-in .3s var(--ease) both; }
+.w-peek .next { gap: 8px; }
+.w-peek .st-switch { margin-bottom: 2px; }
+.next-row i.is-dim { background: rgba(255, 255, 255, .2); box-shadow: none; }
+.w-open { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; }
+.w-year-head { margin-bottom: 8px; }
+.w-year-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.w-year-bar i { display: block; height: 100%; border-radius: inherit; background: rgba(255, 255, 255, .45); }
+.w-edit { align-self: center; margin-top: 4px; padding: 6px 12px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.w-ed-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.w-ed-row:first-child { border-top: 0; }
+.w-ed-name { flex: 1; min-width: 0; font-size: 15px; }
+.w-ed-name .sub { font-size: 12px; }
+.w-ed-toggle { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--border); background: none; cursor: pointer; }
+.w-ed-toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 4px #0d1f19; }
+.w-ed-move { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--border); background: none; color: var(--text); font-size: 15px; cursor: pointer; }
+.w-ed-move:disabled { opacity: .25; cursor: default; }
+@media (min-width: 900px) {
+  .hero--compact .clock { font-size: 64px; }
+  .w-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .w-mini { padding: 14px 16px; }
+  .w-mini .big { font-size: 34px; }
 }

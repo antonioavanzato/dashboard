@@ -78,39 +78,15 @@
     <p id="banner" class="banner" hidden></p>
 
     <section id="view-home" class="view" hidden>
-      <div class="hero">
-        <p class="eyebrow" id="greeting">Добрый день</p>
+      <div class="hero hero--compact">
         <p class="clock" id="clock">00:00</p>
-        <p class="date" id="date"></p>
+        <div class="hero-meta">
+          <p class="date" id="date"></p>
+          <p class="eyebrow" id="greeting">Добрый день</p>
+        </div>
       </div>
-      <div class="grid">
-        <article class="tile stat" data-go="orders">
-          <span class="label">Заявки</span>
-          <b class="big mono" id="homeNew">—</b>
-          <span class="sub" id="homeOrders">новых</span>
-        </article>
-        <article class="tile stat" data-go="planner">
-          <span class="label">Сегодня</span>
-          <b class="big mono" id="homeToday">—</b>
-          <span class="sub" id="homeTodaySub">событий</span>
-        </article>
-        <article class="tile wide" data-go="planner">
-          <div class="row"><span class="label">Ближайшее</span><span class="sub">планер</span></div>
-          <div id="homeNext" class="next"></div>
-        </article>
-        <article class="tile wide">
-          <div class="row"><span class="label">Год <span id="yearNum"></span></span><span class="mono sub" id="yearPct"></span></div>
-          <div class="dots" id="yearDots"></div>
-        </article>
-        <article class="tile wide st-tile" data-go="students" id="homeStudents">
-          <div class="row"><span class="label">Ученики</span><span id="homeStudentsSwitch"></span></div>
-          <div class="st-tile-main">
-            <b class="big mono" id="homeStudentsNum">—</b>
-            <span class="sub" id="homeStudentsSub">загрузка…</span>
-          </div>
-          <div id="homeStudentsList" class="next"></div>
-        </article>
-      </div>
+      <!-- Виджеты рисует home.js; выбор и порядок — долгим тапом по виджету. -->
+      <div id="homeWidgets" class="w-root"></div>
     </section>
 
     <div id="view-orders" class="view">

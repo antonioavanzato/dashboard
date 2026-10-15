@@ -17,7 +17,7 @@ import { dayTasks } from './tasks-view.js';
 import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
-import { renderHome, renderStudentsTile } from './home.js';
+import { renderHome, renderStudentsTile, setHomeNavigate } from './home.js';
 import {
   setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
   setStudentHandlers, studentExists, courseTitle, isAdminEmail,
@@ -508,9 +508,7 @@ document.getElementById('tab-orders').addEventListener('click', () => switchView
 document.getElementById('tab-planner').addEventListener('click', () => switchView('planner'));
 document.getElementById('tab-students').addEventListener('click', () => switchView('students'));
 document.getElementById('tab-settings').addEventListener('click', openSettingsSheet);
-document.querySelectorAll('#view-home [data-go]').forEach((tile) => {
-  tile.addEventListener('click', () => switchView(tile.dataset.go));
-});
+setHomeNavigate((next) => switchView(next));
 document.getElementById('auth-settings').addEventListener('click', openSettingsSheet);
 enablePullToRefresh(poll);
 
