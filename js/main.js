@@ -521,6 +521,12 @@ document.addEventListener('visibilitychange', () => {
 
 // Face ID при открытии запускается сам. Кнопки показываются только если
 // он отменён или не сработал (повторить / войти ключом вручную).
+// Идёт ли сейчас Face ID (нужно, чтобы не перезагрузить страницу посреди скана).
+let faceIdInProgress = false;
+// Новая версия дашборда пришла и ждёт перезагрузки.
+let reloadPending = false;
+const reloadPendingNoKey = () => reloadPending && !loadKey();
+
 async function tryUnlock() {
   const actions = document.getElementById('lock-actions');
   const error = document.getElementById('lock-error');
@@ -528,6 +534,7 @@ async function tryUnlock() {
   actions.hidden = true;
   error.hidden = true;
   status.hidden = false;
+  faceIdInProgress = true;
   try {
     setMemoryKey(await unlock());
     showListScreen();
@@ -538,6 +545,10 @@ async function tryUnlock() {
     error.textContent = e?.name === 'NotAllowedError' ? 'Face ID отменён' : (e.message || 'Не удалось войти');
     error.hidden = false;
     actions.hidden = false;
+  } finally {
+    faceIdInProgress = false;
+    // Face ID не прошёл, а новая версия уже ждёт — ставим её сейчас (ключа в памяти нет, терять нечего).
+    if (reloadPendingNoKey()) location.reload();
   }
 }
 document.getElementById('lock-unlock').addEventListener('click', tryUnlock);
@@ -580,12 +591,24 @@ if ('serviceWorker' in navigator) {
   // иначе обновление обработчика может не доехать до устройства неделями.
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
 
-  // Когда новый обработчик перехватывает управление, перезагружаем страницу
-  // один раз, чтобы показать свежую версию без ручного закрытия.
+  // Новая версия перехватила управление — перезагружаем страницу один раз.
+  // Ключ после Face ID живёт только в памяти: перезагрузка его стирает,
+  // поэтому после входа перезагрузка откладывается до сворачивания (второго Face ID не будет).
+  // При самой первой установке обработчика не было — страница и так свежая, перезагрузка не нужна.
+  const hadController = Boolean(navigator.serviceWorker.controller);
   let reloading = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
+  const reloadNow = () => {
     if (reloading) return;
     reloading = true;
     location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    // Ещё не вошли и Face ID не идёт — лицо не сканировалось, перезагрузка ничего не стоит.
+    if (!loadKey() && !faceIdInProgress) reloadNow();
+    else reloadPending = true;
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && reloadPending) reloadNow();
   });
 }
