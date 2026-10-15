@@ -7,6 +7,7 @@ import { activeOrders } from './store.js';
 import {
   courseSwitch, studentsLoaded, summary, recentStudents, lastSeenText, isOnline, progressBar,
 } from './students.js';
+import { cmMini, cmPeek, setCloudMonitorListener } from './cloud-monitor.js';
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, '0');
@@ -154,6 +155,20 @@ const WIDGETS = {
       return nodes;
     },
   },
+  // Cloud Monitor — по мини-виджету на проект, как плитки ProjectTileCard в приложении.
+  // Своего раздела нет: подробности — в выжимке под рядом.
+  cmAvanzato: {
+    title: 'Avanzato',
+    kind: 'mini',
+    mini: () => cmMini('avanzato'),
+    peek: () => cmPeek('avanzato'),
+  },
+  cmAlga: {
+    title: 'ALGA',
+    kind: 'mini',
+    mini: () => cmMini('alga'),
+    peek: () => cmPeek('alga'),
+  },
   next: {
     title: 'Ближайшее',
     kind: 'wide',
@@ -209,6 +224,8 @@ const DEFAULT_LAYOUT = [
   { id: 'orders', on: true },
   { id: 'today', on: true },
   { id: 'students', on: true },
+  { id: 'cmAvanzato', on: true },
+  { id: 'cmAlga', on: true },
   { id: 'next', on: true },
   { id: 'year', on: true },
   { id: 'yearDots', on: false },
@@ -223,10 +240,10 @@ function loadLayout() {
   }
   if (!Array.isArray(saved)) saved = [];
   const list = saved.filter((w) => w && WIDGETS[w.id]).map((w) => ({ id: w.id, on: Boolean(w.on) }));
-  // Виджеты, которых не было в сохранённом выборе (новые), дописываются в конец.
-  for (const def of DEFAULT_LAYOUT) {
-    if (!list.some((w) => w.id === def.id)) list.push({ ...def });
-  }
+  // Виджеты, которых не было в сохранённом выборе (новые), встают на своё место по умолчанию.
+  DEFAULT_LAYOUT.forEach((def, i) => {
+    if (!list.some((w) => w.id === def.id)) list.splice(Math.min(i, list.length), 0, { ...def });
+  });
   return list;
 }
 
@@ -277,12 +294,16 @@ function miniTile(id) {
   tile.setAttribute('aria-pressed', String(selected === id));
   if (m.alert) tile.dataset.alert = 'true';
   if (m.live) tile.dataset.live = 'true';
+  if (m.dim) tile.classList.add('is-dim');
+  if (m.level) tile.dataset.level = m.level;
   tile.append(el('span', 'label', w.title), el('b', 'big mono', String(m.num)), el('span', 'sub', m.sub));
   const wasLong = attachLongPress(tile, openWidgetEditor);
   tile.addEventListener('click', () => {
     if (wasLong()) return;
     if (selected === id) {
-      navigate(w.go);
+      // Есть раздел — открываем его; нет (Cloud Monitor) — сворачиваем выжимку.
+      if (w.go) navigate(w.go);
+      else { selected = null; render(); }
       return;
     }
     selected = id;
@@ -315,10 +336,13 @@ function wideTile(id) {
 function peekPanel(id) {
   const panel = el('div', 'tile wide w-peek');
   const head = el('div', 'row');
-  const open = el('button', 'w-open', 'Открыть ›');
-  open.type = 'button';
-  open.addEventListener('click', () => navigate(WIDGETS[id].go));
-  head.append(el('span', 'label', WIDGETS[id].title), open);
+  head.append(el('span', 'label', WIDGETS[id].title));
+  if (WIDGETS[id].go) {
+    const open = el('button', 'w-open', 'Открыть ›');
+    open.type = 'button';
+    open.addEventListener('click', () => navigate(WIDGETS[id].go));
+    head.append(open);
+  }
   const body = el('div', 'next');
   body.append(...WIDGETS[id].peek());
   panel.append(head, body);
@@ -328,6 +352,8 @@ function peekPanel(id) {
 function render() {
   const root = $('homeWidgets');
   if (!root) return;
+  // Не стираем то, что набирается в поле пароля Cloud Monitor (опрос перерисовывает главную).
+  if (document.activeElement?.closest?.('.cm-login')) return;
   const visible = layout.filter((w) => w.on).map((w) => w.id);
   if (selected && !visible.includes(selected)) selected = null;
 
@@ -446,6 +472,7 @@ addEventListener('resize', moveGlow);
 
 tick();
 setInterval(tick, 1000);
+setCloudMonitorListener(() => render());
 render();
 // Первая установка подсветки — без анимации, чтобы она не «прилетала» при запуске.
 requestAnimationFrame(() => {

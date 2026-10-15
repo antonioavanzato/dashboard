@@ -18,6 +18,7 @@ import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
 import { renderHome, renderStudentsTile, setHomeNavigate } from './home.js';
+import { cmBegin } from './cloud-monitor.js';
 import {
   setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
   setStudentHandlers, studentExists, courseTitle, isAdminEmail,
@@ -373,6 +374,8 @@ async function poll() {
   if (view === 'home') {
     pollPlanner({ throttle: true });
     pollStudents({ throttle: true });
+    // Cloud Monitor: сам грузит не чаще раза в 300 с (как в приложении) и только пока видна главная.
+    cmBegin();
   }
   const key = loadKey();
   if (!key) return;
