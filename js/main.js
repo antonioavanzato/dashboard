@@ -307,7 +307,7 @@ async function pollStudents({ throttle = false } = {}) {
     const json = JSON.stringify(fresh);
     const changed = json !== lastStudentsJson[course] || !studentsLoaded(course);
     lastStudentsJson[course] = json;
-    setStudents(course, fresh);
+    await setStudents(course, fresh);
     if (changed && course === currentCourse() && (view === 'students' || view === 'home')) applyView();
   } catch (error) {
     setConnection(false);

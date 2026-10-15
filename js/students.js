@@ -13,7 +13,16 @@ export const COURSES = [
   { id: 'davinci', label: 'DaVinci', title: 'DaVinci Resolve', totalLessons: 11 },
 ];
 
-const ADMIN = 'antonioavanzato@gmail.com';
+// Аккаунт автора (CourseStyle.adminEmail в приложении). Репозиторий публичный, поэтому
+// здесь не сама почта, а её отпечаток SHA-256: по нему почту не восстановить.
+const ADMIN_HASH = '5231f1eae44c0cc8f9973049992bee6c84f34ba3ccab05fed2895c186c8a576a';
+const adminIds = new Set(); // почты, чей отпечаток совпал (только в памяти)
+const isAdminId = (id) => adminIds.has(id);
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+}
 const ONLINE_MS = 180 * 1000; // как CourseStudent.isOnline
 
 // Названия модулей курса avanzato — как CourseStyle.avanzatoModules (modules[0…8]).
@@ -38,7 +47,7 @@ let readyTimer = null;
 let pickCourse = () => {};
 
 export function setStudentHandlers(h) { handlers = h; }
-export const isAdminEmail = (email) => email === ADMIN;
+export const isAdminEmail = (email) => isAdminId(email);
 export const studentExists = (email, id = course) => (data[id] || []).some((s) => s.id === email);
 export const courseTitle = (id = course) => COURSES.find((c) => c.id === id).title;
 
@@ -93,16 +102,20 @@ function normalize(row, totalLessons) {
   };
 }
 
-export function setStudents(courseId, rows) {
+export async function setStudents(courseId, rows) {
   const info = COURSES.find((c) => c.id === courseId);
-  data[courseId] = rows.map((r) => normalize(r, info.totalLessons));
+  const list = rows.map((r) => normalize(r, info.totalLessons));
+  for (const st of list) {
+    if (!adminIds.has(st.id) && (await sha256Hex(st.id)) === ADMIN_HASH) adminIds.add(st.id);
+  }
+  data[courseId] = list;
 }
 
 // ---------- Вычисления (как в CourseManagementView) ----------
 
 export const isOnline = (s, now = Date.now()) => Boolean(s.lastSeen) && Math.abs(now - s.lastSeen) < ONLINE_MS;
 const all = (id = course) => data[id] || [];
-const pupils = (id = course) => all(id).filter((s) => s.id !== ADMIN); // studentsOnly
+const pupils = (id = course) => all(id).filter((s) => !isAdminId(s.id)); // studentsOnly
 
 export function summary(id = course) {
   const list = pupils(id);
@@ -141,8 +154,8 @@ function filteredStudents() {
   });
   return list.sort((a, b) => {
     // Аккаунт автора всегда сверху.
-    if (a.id === ADMIN) return -1;
-    if (b.id === ADMIN) return 1;
+    if (isAdminId(a.id)) return -1;
+    if (isAdminId(b.id)) return 1;
     if (sortMode === 'progress') return b.progress - a.progress;
     if (sortMode === 'newest') return b.createdAt - a.createdAt;
     if (sortMode === 'name') return (a.name ?? a.id).localeCompare(b.name ?? b.id, 'ru', { sensitivity: 'base' });
@@ -228,7 +241,7 @@ function seal(size) {
 function avatar(s, size) {
   const node = el('span', 'st-avatar');
   node.style.setProperty('--size', `${size}px`);
-  if (s.id === ADMIN) node.classList.add('is-admin');
+  if (isAdminId(s.id)) node.classList.add('is-admin');
   if (!s.active) node.classList.add('is-blocked');
   node.append(el('span', null, (s.name || s.id).slice(0, 1).toUpperCase()));
   if (isOnline(s)) node.append(el('i', 'st-avatar-dot'));
@@ -277,7 +290,7 @@ function pressable(node, onTap, onLong) {
 }
 
 function ctx(s) {
-  return { student: s, course, courseTitle: courseTitle(), isAdmin: s.id === ADMIN, handlers };
+  return { student: s, course, courseTitle: courseTitle(), isAdmin: isAdminId(s.id), handlers };
 }
 
 function rerender() { if (rootNode) renderStudents(rootNode, pickCourse); }
@@ -396,7 +409,7 @@ function listCard(s) {
   const main = el('div', 'st-card-main');
   const top = el('div', 'st-card-top');
   top.append(el('span', 'st-card-name', displayName(s)));
-  if (s.id === ADMIN) top.append(badge('АВТОР', 'author'));
+  if (isAdminId(s.id)) top.append(badge('АВТОР', 'author'));
   if (!s.active) top.append(badge('БЛОК', 'blocked'));
   if (s.davinciModule) top.append(badge(s.davinciChecksDone > 0 ? `DV ${s.davinciChecksDone}/${s.davinciChecksTotal}` : 'DV', 'dv'));
   const meta = el('div', 'st-card-meta');
@@ -460,7 +473,7 @@ function actionTile(title, subtitle, onClick, kind = '') {
 }
 
 function renderDetail(root, s) {
-  const isAdmin = s.id === ADMIN;
+  const isAdmin = isAdminId(s.id);
   const completedModules = s.modules.filter(Boolean).length;
   const totalModules = course === 'avanzato' ? AVANZATO_MODULES.length : Math.max(s.modules.length, 1);
   const firstOpen = s.modules.findIndex((done) => !done);
