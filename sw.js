@@ -7,7 +7,7 @@
 // проверяет sw.js при каждом запуске (updateViaCache: 'none' в main.js),
 // ставит новую версию в фоне, и страница один раз перезагружается.
 // Так нет ни «неделями старой версии», ни смеси старых и новых файлов.
-const CACHE = 'dashboard-shell-v15';
+const CACHE = 'dashboard-shell-v16';
 const FONTS = 'dashboard-fonts-v1';
 const SHELL = [
   './',
@@ -69,6 +69,10 @@ self.addEventListener('fetch', (event) => {
 
   // Всё остальное чужое (API, Firebase) — мимо кэша: там персональные данные.
   if (url.origin !== self.location.origin) return;
+
+  // Иконки и описание приложения Safari берёт сам при «На экран Домой» / «Добавить в Dock» —
+  // отдаём их напрямую из сети, без участия этого обработчика.
+  if (/\.(png|webmanifest)$/.test(url.pathname) || url.pathname.endsWith('/apple-touch-icon.png')) return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
