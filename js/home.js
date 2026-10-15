@@ -110,4 +110,10 @@ addEventListener('pointermove', (e) => {
 tick();
 setInterval(tick, 1000);
 renderYear();
-requestAnimationFrame(moveGlow);
+// Первая установка подсветки — без анимации, чтобы она не «прилетала» при запуске.
+requestAnimationFrame(() => {
+  const glow = $('tabbar').querySelector('.dock-glow');
+  glow.style.transition = 'none';
+  moveGlow();
+  requestAnimationFrame(() => { glow.style.transition = ''; });
+});

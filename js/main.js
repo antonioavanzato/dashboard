@@ -1,3 +1,9 @@
+// Не даём встроить приложение в чужую страницу (защита от «подставных» кликов).
+if (window.top !== window.self) {
+  document.documentElement.hidden = true;
+  window.top.location = window.self.location.href;
+}
+
 import { listOrders, listEvents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError } from './api.js';
 import {
   setEvents, eventsCount, allEvents, getCreateActions, renderPlanner, resetPlanner, setPlannerHandlers, findEvent, eventBody,
@@ -61,6 +67,7 @@ function applyView() {
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
   document.getElementById('list-screen').dataset.view = view;
   document.getElementById('fab-wrap').hidden = !isPlanner;
+  document.getElementById('tabbar').classList.remove('is-hidden');
   closeFab();
   document.getElementById('title').textContent = isPlanner ? 'Планер' : 'Заявки';
   if (isHome) {
@@ -227,10 +234,16 @@ function openSettingsSheet() {
 // Нижняя пилюля прячется при прокрутке вниз и плавно возвращается при прокрутке вверх.
 (function autoHideTabbar() {
   const bar = document.getElementById('tabbar');
+  // При обновлении страницы браузер сам возвращает прокрутку — этот скачок
+  // не должен прятать док. Начинаем всегда сверху и слушаем жесты чуть позже.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  let ready = false;
+  setTimeout(() => { ready = true; }, 600);
   let lastY = window.scrollY;
   window.addEventListener('scroll', () => {
     const y = Math.max(0, window.scrollY);
     const delta = y - lastY;
+    if (!ready) { lastY = y; return; }
     if (Math.abs(delta) < 6) return; // мелкое дрожание не считаем
     if (y < 40 || delta < 0) bar.classList.remove('is-hidden');
     else bar.classList.add('is-hidden');

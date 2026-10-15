@@ -1,10 +1,14 @@
-// Кэшируем ТОЛЬКО оболочку. Заявки — персональные данные,
-// на диск устройства они не попадают (152-ФЗ).
+// Кэшируем ТОЛЬКО оболочку (код, стили, иконки, шрифты). Заявки, события
+// и задачи — персональные данные, на диск устройства они не попадают (152-ФЗ).
 //
-// Стратегия — «сначала сеть». Кэш нужен лишь для работы без связи.
-// Обратный порядок (сначала кэш) приводил к тому, что на устройстве
-// неделями жила старая версия страницы.
-const CACHE = 'dashboard-shell-v13';
+// Стратегия — «сначала кэш» из ОДНОЙ версии оболочки: приложение открывается
+// мгновенно, без ожидания сети. Обновление приходит только целиком — новой
+// версией этого файла (CACHE ниже меняется при каждой выкладке). Браузер
+// проверяет sw.js при каждом запуске (updateViaCache: 'none' в main.js),
+// ставит новую версию в фоне, и страница один раз перезагружается.
+// Так нет ни «неделями старой версии», ни смеси старых и новых файлов.
+const CACHE = 'dashboard-shell-v14';
+const FONTS = 'dashboard-fonts-v1';
 const SHELL = [
   './',
   'index.html',
@@ -40,29 +44,42 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => key !== CACHE && key !== FONTS).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  // Запросы к API мимо кэша всегда: ответы содержат персональные данные.
-  if (url.origin !== self.location.origin) return;
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
 
-  event.respondWith(
-    // cache: 'no-cache' — сверяться с сервером всегда. GitHub Pages разрешает
-    // браузеру 10 минут держать старые файлы, и после выкладки страница
-    // получала смесь новых и старых скриптов (чёрный экран).
-    fetch(event.request, { cache: 'no-cache' })
-      .then((response) => {
-        // Свежий файл кладём в кэш — пригодится, когда связи не будет.
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || Response.error()))
-  );
+  // Шрифты Google: неизменны, держим в отдельном кэше.
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(caches.open(FONTS).then(async (cache) => {
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
+      return res;
+    }));
+    return;
+  }
+
+  // Всё остальное чужое (API, Firebase) — мимо кэша: там персональные данные.
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    // Запуск приложения (навигация) всегда отдаём из оболочки.
+    const hit = await cache.match(req.mode === 'navigate' ? './' : req, { ignoreSearch: req.mode === 'navigate' })
+      || await cache.match(req, { ignoreSearch: true });
+    if (hit) return hit;
+    try {
+      return await fetch(req);
+    } catch {
+      return Response.error();
+    }
+  })());
 });
