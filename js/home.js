@@ -1,6 +1,9 @@
 // Главная дашборда: часы, сводка по заявкам и планеру, год точками.
 // Сеть здесь не трогается: данные приходят из main.js.
 import { activeOrders } from './store.js';
+import {
+  courseSwitch, studentsLoaded, summary, recentStudents, lastSeenText, isOnline, progressBar,
+} from './students.js';
 
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, '0');
@@ -80,6 +83,43 @@ export function renderHome({ orders, events }) {
     title.textContent = e.task;
     row.append(document.createElement('i'), when, title);
     next.append(row);
+  }
+}
+
+// Плитка «Ученики»: переключатель курса прямо на плитке, главная цифра —
+// активные ученики, ниже последние заходившие с прогрессом. Нажатие на плитку — в раздел.
+export function renderStudentsTile(onPickCourse) {
+  $('homeStudentsSwitch').replaceChildren(courseSwitch(onPickCourse, 'tabs st-switch'));
+  const list = $('homeStudentsList');
+  list.replaceChildren();
+  if (!studentsLoaded()) {
+    $('homeStudentsNum').textContent = '—';
+    $('homeStudentsSub').textContent = 'загрузка…';
+    return;
+  }
+  const s = summary();
+  $('homeStudentsNum').textContent = String(s.active);
+  $('homeStudentsSub').textContent = `${plural(s.active, 'активный', 'активных', 'активных')}`
+    + ` · онлайн ${s.online} · прогресс ${s.avg}%`;
+  const recent = recentStudents();
+  if (!recent.length) {
+    list.append(Object.assign(document.createElement('p'), { className: 'sub', textContent: 'Пока никто не заходил' }));
+    return;
+  }
+  for (const st of recent) {
+    const row = document.createElement('div');
+    row.className = 'next-row st-row';
+    const dot = document.createElement('span');
+    dot.className = 'st-dot';
+    dot.dataset.online = String(isOnline(st));
+    const title = document.createElement('span');
+    title.className = 'next-title';
+    title.textContent = st.name || st.id;
+    const when = document.createElement('span');
+    when.className = 'mono next-when';
+    when.textContent = lastSeenText(st);
+    row.append(dot, title, progressBar(st.progress), when);
+    list.append(row);
   }
 }
 

@@ -102,6 +102,14 @@
           <div class="row"><span class="label">Год <span id="yearNum"></span></span><span class="mono sub" id="yearPct"></span></div>
           <div class="dots" id="yearDots"></div>
         </article>
+        <article class="tile wide st-tile" data-go="students" id="homeStudents">
+          <div class="row"><span class="label">Ученики</span><span id="homeStudentsSwitch"></span></div>
+          <div class="st-tile-main">
+            <b class="big mono" id="homeStudentsNum">—</b>
+            <span class="sub" id="homeStudentsSub">загрузка…</span>
+          </div>
+          <div id="homeStudentsList" class="next"></div>
+        </article>
       </div>
     </section>
 
@@ -112,6 +120,10 @@
 
     <section id="view-planner" class="view" hidden>
       <div id="planner"></div>
+    </section>
+
+    <section id="view-students" class="view" hidden>
+      <div id="students"></div>
     </section>
   </main>
 
@@ -126,6 +138,9 @@
     </button>
     <button id="tab-planner" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Планер" title="Планер">
       <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+    </button>
+    <button id="tab-students" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Ученики" title="Ученики">
+      <svg viewBox="0 0 24 24"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.6 2.5 3 5.5 3s5.5-1.4 5.5-3V11M21.5 9v5"/></svg>
     </button>
     <button id="tab-settings" class="tabbar-btn" type="button" aria-pressed="false" aria-label="Настройки" title="Настройки">
       <svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>

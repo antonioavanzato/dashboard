@@ -4,7 +4,7 @@ if (window.top !== window.self) {
   window.top.location = window.self.location.href;
 }
 
-import { listOrders, listEvents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError } from './api.js';
+import { listOrders, listEvents, listStudents, saveEvent, setOrderStatus, deleteOrder, UnauthorizedError } from './api.js';
 import {
   setEvents, eventsCount, allEvents, getCreateActions, renderPlanner, resetPlanner, setPlannerHandlers, findEvent, eventBody,
 } from './planner.js';
@@ -14,7 +14,10 @@ import { dayTasks } from './tasks-view.js';
 import { openSettings, refreshSettings } from './settings.js';
 import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } from './auth.js';
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
-import { renderHome } from './home.js';
+import { renderHome, renderStudentsTile } from './home.js';
+import {
+  setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
+} from './students.js';
 import './sheet-swipe.js';
 import {
   showAuthScreen,
@@ -33,6 +36,8 @@ import {
 const POLL_INTERVAL_MS = 20000;
 // Планер — как EventsSyncService.pollInterval в приложении.
 const PLANNER_POLL_INTERVAL_MS = 60000;
+// Ученики — только чтение; раз в минуту, чтобы беречь бесплатный лимит.
+const STUDENTS_POLL_INTERVAL_MS = 60000;
 const VIEW_KEY = 'hub.pwa.view';
 
 // Заявки живут только здесь, в памяти вкладки. На диск не попадают.
@@ -42,6 +47,7 @@ let pollTimer = null;
 let view = loadView();
 let plannerLoaded = false;
 let lastEventsJson = '';
+const lastStudentsJson = {};
 
 // Дашборд всегда открывается с главной — это сводка по всем инструментам.
 function loadView() {
@@ -62,6 +68,8 @@ function applyView() {
   document.getElementById('view-home').hidden = !isHome;
   document.getElementById('view-orders').hidden = view !== 'orders';
   document.getElementById('view-planner').hidden = !isPlanner;
+  document.getElementById('view-students').hidden = view !== 'students';
+  document.getElementById('tab-students').setAttribute('aria-pressed', String(view === 'students'));
   document.getElementById('tab-home').setAttribute('aria-pressed', String(isHome));
   document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
   document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
@@ -69,9 +77,13 @@ function applyView() {
   document.getElementById('fab-wrap').hidden = !isPlanner;
   document.getElementById('tabbar').classList.remove('is-hidden');
   closeFab();
-  document.getElementById('title').textContent = isPlanner ? 'Планер' : 'Заявки';
+  document.getElementById('title').textContent = isPlanner ? 'Планер' : view === 'students' ? 'Ученики' : 'Заявки';
   if (isHome) {
     renderHome({ orders, events: plannerLoaded ? allEvents() : null });
+    renderStudentsTile(onPickCourse);
+  } else if (view === 'students') {
+    document.getElementById('subtitle').textContent = studentsSubtitle();
+    renderStudents(document.getElementById('students'), onPickCourse);
   } else if (isPlanner) {
     // Firebase подгружается только когда открыт Планер.
     startTasks(onTasksChanged);
@@ -112,6 +124,9 @@ function logout() {
   plannerLoaded = false;
   lastEventsJson = '';
   resetPlanner();
+  resetStudents();
+  delete lastStudentsJson.avanzato;
+  delete lastStudentsJson.davinci;
   setBanner(null);
   setConnection(false);
   resetShownOrders();
@@ -261,10 +276,46 @@ setPlannerHandlers({
   dayTasks: (day) => dayTasks(day, openSettingsSheet),
 });
 
+// Ученики: только GET students выбранного курса — как опрос в приложении.
+// На главной опрос идёт раз в 20 с (заявки) — учеников при этом берём не чаще раза в минуту.
+let lastStudentsFetch = 0;
+async function pollStudents({ throttle = false } = {}) {
+  const key = loadKey();
+  if (!key) return;
+  const course = currentCourse();
+  if (throttle && studentsLoaded(course) && Date.now() - lastStudentsFetch < STUDENTS_POLL_INTERVAL_MS) return;
+  lastStudentsFetch = Date.now();
+  try {
+    const fresh = await listStudents(key, course);
+    setConnection(true);
+    const json = JSON.stringify(fresh);
+    const changed = json !== lastStudentsJson[course] || !studentsLoaded(course);
+    lastStudentsJson[course] = json;
+    setStudents(course, fresh);
+    if (changed && course === currentCourse() && (view === 'students' || view === 'home')) applyView();
+  } catch (error) {
+    setConnection(false);
+    if (handleError(error)) return;
+    if (view === 'students') setBanner('Нет связи. Показаны последние загруженные ученики.');
+  }
+}
+
+// Переключатель курса (на плитке и в разделе): незагруженный курс подтягиваем сразу.
+function onPickCourse(id) {
+  if (id === currentCourse()) return;
+  setCourse(id);
+  applyView();
+  if (!studentsLoaded(id)) pollStudents();
+}
+
 async function poll() {
   if (view === 'planner') return pollPlanner();
-  // Главной нужны и заявки, и события.
-  if (view === 'home') pollPlanner();
+  if (view === 'students') return pollStudents();
+  // Главной нужны заявки, события и ученики.
+  if (view === 'home') {
+    pollPlanner();
+    pollStudents({ throttle: true });
+  }
   const key = loadKey();
   if (!key) return;
   try {
@@ -293,7 +344,9 @@ async function poll() {
 function startPolling() {
   stopPolling();
   poll();
-  pollTimer = setInterval(poll, view === 'planner' ? PLANNER_POLL_INTERVAL_MS : POLL_INTERVAL_MS);
+  const interval = view === 'planner' ? PLANNER_POLL_INTERVAL_MS
+    : view === 'students' ? STUDENTS_POLL_INTERVAL_MS : POLL_INTERVAL_MS;
+  pollTimer = setInterval(poll, interval);
 }
 
 function stopPolling() {
@@ -400,6 +453,7 @@ document.addEventListener('click', (e) => { if (!e.target.closest('#fab-wrap')) 
 document.getElementById('tab-home').addEventListener('click', () => switchView('home'));
 document.getElementById('tab-orders').addEventListener('click', () => switchView('orders'));
 document.getElementById('tab-planner').addEventListener('click', () => switchView('planner'));
+document.getElementById('tab-students').addEventListener('click', () => switchView('students'));
 document.getElementById('tab-settings').addEventListener('click', openSettingsSheet);
 document.querySelectorAll('#view-home [data-go]').forEach((tile) => {
   tile.addEventListener('click', () => switchView(tile.dataset.go));

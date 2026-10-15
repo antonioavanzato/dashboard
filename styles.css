@@ -1080,3 +1080,33 @@ body.ed-open { overflow: hidden; }
   .tabbar.dock.is-hidden { transform: translateY(-50%); opacity: 1; pointer-events: auto; }
   .tabbar.is-hidden ~ .fab-wrap { transform: none; opacity: 1; pointer-events: auto; }
 }
+
+/* ============================================================
+   Ученики (только чтение)
+   ============================================================ */
+.st-bar { display: inline-block; width: 56px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, .1); overflow: hidden; flex-shrink: 0; }
+.st-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .5s var(--ease); }
+.st-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: rgba(255, 255, 255, .18); }
+.st-dot[data-online="true"] { background: var(--accent); }
+.st-head { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.st-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.st-count { font-size: 12px; color: var(--muted); }
+.st-card.is-inactive { opacity: .55; }
+.st-list { display: flex; flex-direction: column; gap: 8px; }
+.st-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.st-stat { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
+.st-stat b { font-size: 22px; font-weight: 400; }
+.st-stat .sub { font-size: 11px; color: var(--muted); }
+.st-mods { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.st-mods i { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--border); }
+.st-mods i.done { background: var(--accent); border-color: var(--accent); }
+.st-tile .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.st-switch { padding: 0; }
+.st-switch .tab { flex: 0 0 auto; padding: 6px 10px; font-size: 11px; }
+.st-tile-main { display: flex; align-items: baseline; gap: 12px; margin: 14px 0 12px; flex-wrap: wrap; }
+.st-tile-main .big { margin-top: 0; }
+.st-row .next-title { flex: 1; min-width: 0; }
+@media (max-width: 480px) {
+  .st-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-row .st-bar { width: 40px; }
+}

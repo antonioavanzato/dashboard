@@ -9,8 +9,9 @@ export class UnauthorizedError extends Error {
   }
 }
 
-async function request(key, route, { method = 'GET', body } = {}) {
-  const url = `${BASE_URL}?r=${encodeURIComponent(route)}`;
+async function request(key, route, { method = 'GET', body, query = {} } = {}) {
+  let url = `${BASE_URL}?r=${encodeURIComponent(route)}`;
+  for (const [name, value] of Object.entries(query)) url += `&${name}=${encodeURIComponent(value)}`;
   const options = {
     method,
     headers: { 'X-Api-Key': key },
@@ -51,7 +52,6 @@ export async function deleteOrder(key, id) {
 }
 
 // Планер — тот же маршрут, что опрашивает приложение (EventsSyncService.poll).
-// Только чтение: PWA события не создаёт, не меняет и не удаляет.
 export async function listEvents(key) {
   const response = await request(key, 'events');
   let data;
@@ -67,4 +67,17 @@ export async function listEvents(key) {
 // Облако делает полный UPSERT, поэтому тело всегда собирается целиком (planner.js).
 export async function saveEvent(key, body) {
   await request(key, 'events', { method: 'POST', body });
+}
+
+// Ученики курса — тот же GET, что CourseCloudClient.fetchStudents в приложении
+// (course: "avanzato" | "davinci"). ТОЛЬКО ЧТЕНИЕ: методов записи для учеников здесь нет.
+export async function listStudents(key, course) {
+  const response = await request(key, 'students', { query: { course } });
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error('Сервер вернул неожиданный ответ');
+  }
+  return Array.isArray(data) ? data : [];
 }
