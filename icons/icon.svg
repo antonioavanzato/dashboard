@@ -1,28 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <defs>
-    <radialGradient id="glow" cx="30%" cy="18%" r="85%">
-      <stop offset="0" stop-color="#12241f"/>
-      <stop offset=".35" stop-color="#0c1514"/>
-      <stop offset=".7" stop-color="#090b0e"/>
-      <stop offset="1" stop-color="#07080b"/>
-    </radialGradient>
-    <filter id="grain" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7"/>
-      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .06 0"/>
-    </filter>
-    <filter id="dotglow" x="-200%" y="-200%" width="500%" height="500%">
-      <feGaussianBlur stdDeviation="14"/>
-    </filter>
-  </defs>
-  <rect width="1024" height="1024" fill="url(#glow)"/>
-  <rect width="1024" height="1024" filter="url(#grain)"/>
-  <!-- кольцо с разрывом: «год идёт», точка — «сейчас» -->
-  <circle cx="512" cy="512" r="300" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="7"
-          stroke-dasharray="1790 95" transform="rotate(-38 512 512)" stroke-linecap="round"/>
-  <circle cx="748" cy="327" r="22" fill="#7cf0c5" filter="url(#dotglow)" opacity=".9"/>
-  <circle cx="748" cy="327" r="15" fill="#7cf0c5"/>
-  <!-- знак AV -->
-  <g transform="translate(512 512) scale(.235) translate(-980 -965)" fill="#f2f3f5">
+  <defs><filter id="g" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="16"/></filter></defs>
+  <circle cx="512" cy="512" r="420" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="12"
+          stroke-dasharray="2480 160" transform="rotate(-38 512 512)" stroke-linecap="round"/>
+  <circle cx="842" cy="253" r="30" fill="#7cf0c5" filter="url(#g)" opacity=".9"/>
+  <circle cx="842" cy="253" r="21" fill="#7cf0c5"/>
+  <g transform="translate(512 512) scale(.33) translate(-980 -965)" fill="#fff">
     <path fill-rule="evenodd" d="M673 479H878L963 702H1370L1458 479H1668L1267 1451H1055L970 1231H581L500 1451H293ZM772 712L642 1067H907ZM1036 863H1300L1166 1218Z"/>
   </g>
 </svg>

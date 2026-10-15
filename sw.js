@@ -7,7 +7,7 @@
 // проверяет sw.js при каждом запуске (updateViaCache: 'none' в main.js),
 // ставит новую версию в фоне, и страница один раз перезагружается.
 // Так нет ни «неделями старой версии», ни смеси старых и новых файлов.
-const CACHE = 'dashboard-shell-v14';
+const CACHE = 'dashboard-shell-v15';
 const FONTS = 'dashboard-fonts-v1';
 const SHELL = [
   './',
@@ -31,9 +31,9 @@ const SHELL = [
   'js/sheet-swipe.js',
   'icons/icon.svg',
   'icons/logo.svg',
-  'icons/apple-touch-icon-v2.png',
-  'icons/icon-192-v2.png',
-  'icons/icon-512-v2.png',
+  'icons/apple-touch-icon-v3.png',
+  'icons/icon-192-v3.png',
+  'icons/icon-512-v3.png',
 ];
 
 self.addEventListener('install', (event) => {
