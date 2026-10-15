@@ -1185,3 +1185,5 @@ body.ed-open { overflow: hidden; }
   .w-mini { padding: 14px 16px; }
   .w-mini .big { font-size: 34px; }
 }
+/* Главная: плитки «выезжают» только при первом показе, не при каждой перерисовке. */
+.w-root[data-ready] .tile:not(.w-peek) { animation: none; }

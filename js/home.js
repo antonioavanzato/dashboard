@@ -32,12 +32,28 @@ const time = (d) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: 
 const shortDay = (d) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(d).replace('.', '');
 const typeColor = (type) => getComputedStyle(document.documentElement).getPropertyValue(`--type-${type}`) || '#7cf0c5';
 
+// Часы: узлы создаются один раз, дальше меняется только текст.
+// Если пересоздавать двоеточие каждую секунду, его анимация мигания
+// перезапускается раньше, чем успевает потускнеть.
+const clockParts = (() => {
+  const hours = el('span');
+  const sep = el('span', 'sep', ':');
+  const minutes = el('span');
+  $('clock').replaceChildren(hours, sep, minutes);
+  return { hours, minutes };
+})();
+
+function setText(node, text) {
+  if (node.textContent !== text) node.textContent = text;
+}
+
 function tick() {
   const d = new Date();
   const h = d.getHours();
-  $('clock').innerHTML = `${pad(h)}<span class="sep">:</span>${pad(d.getMinutes())}`;
-  $('date').textContent = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' }).format(d);
-  $('greeting').textContent = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+  setText(clockParts.hours, pad(h));
+  setText(clockParts.minutes, pad(d.getMinutes()));
+  setText($('date'), new Intl.DateTimeFormat('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' }).format(d));
+  setText($('greeting'), h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер');
 }
 
 // ---------- Состояние ----------
@@ -46,6 +62,7 @@ let data = { orders: [], events: null };
 let onPickCourse = () => {};
 let navigate = () => {};
 let selected = null; // id раскрытого мини-виджета
+let readyTimer = null;
 
 export function setHomeNavigate(fn) { navigate = fn; }
 
@@ -335,6 +352,12 @@ function render() {
     }
   }
   flushGrid();
+  // Анимация появления — только при первом показе главной. Дальше (нажатие на виджет,
+  // новые данные при опросе) плитки перерисовываются без «выезда» и размытия.
+  // Отметка ставится, когда главная реально видна и анимация (до ~0.9 с) доиграла.
+  if (!root.dataset.ready && !readyTimer && root.offsetParent !== null) {
+    readyTimer = setTimeout(() => { root.dataset.ready = 'true'; }, 900);
+  }
 
   const edit = el('button', 'w-edit', 'Виджеты');
   edit.type = 'button';
