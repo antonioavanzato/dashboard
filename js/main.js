@@ -41,8 +41,11 @@ import {
 const POLL_INTERVAL_MS = 20000;
 // Планер — как EventsSyncService.pollInterval в приложении.
 const PLANNER_POLL_INTERVAL_MS = 60000;
-// Ученики — только чтение; раз в минуту, чтобы беречь бесплатный лимит.
-const STUDENTS_POLL_INTERVAL_MS = 60000;
+// Ученики — как StudentsPollingRegistration в приложении: каждые 20 с, пока открыт раздел.
+const STUDENTS_POLL_INTERVAL_MS = 20000;
+// Главная опрашивается каждые 20 с (заявки, как в приложении). События и ученики
+// на ней берутся не чаще раза в минуту — события как в планере приложения (60 с).
+const HOME_SLOW_INTERVAL_MS = 60000;
 const VIEW_KEY = 'hub.pwa.view';
 
 // Заявки живут только здесь, в памяти вкладки. На диск не попадают.
@@ -152,9 +155,12 @@ function handleError(error) {
 }
 
 // Планер: только GET events — тот же запрос, что делает приложение при опросе.
-async function pollPlanner() {
+let lastEventsFetch = 0;
+async function pollPlanner({ throttle = false } = {}) {
   const key = loadKey();
   if (!key) return;
+  if (throttle && plannerLoaded && Date.now() - lastEventsFetch < HOME_SLOW_INTERVAL_MS) return;
+  lastEventsFetch = Date.now();
   try {
     const fresh = await listEvents(key);
     setConnection(true);
@@ -286,13 +292,12 @@ setPlannerHandlers({
 });
 
 // Ученики: только GET students выбранного курса — как опрос в приложении.
-// На главной опрос идёт раз в 20 с (заявки) — учеников при этом берём не чаще раза в минуту.
 let lastStudentsFetch = 0;
 async function pollStudents({ throttle = false } = {}) {
   const key = loadKey();
   if (!key) return;
   const course = currentCourse();
-  if (throttle && studentsLoaded(course) && Date.now() - lastStudentsFetch < STUDENTS_POLL_INTERVAL_MS) return;
+  if (throttle && studentsLoaded(course) && Date.now() - lastStudentsFetch < HOME_SLOW_INTERVAL_MS) return;
   lastStudentsFetch = Date.now();
   try {
     const fresh = await listStudents(key, course);
@@ -364,7 +369,7 @@ async function poll() {
   if (view === 'students') return pollStudents();
   // Главной нужны заявки, события и ученики.
   if (view === 'home') {
-    pollPlanner();
+    pollPlanner({ throttle: true });
     pollStudents({ throttle: true });
   }
   const key = loadKey();
