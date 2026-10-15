@@ -1187,3 +1187,16 @@ body.ed-open { overflow: hidden; }
 }
 /* Главная: плитки «выезжают» только при первом показе, не при каждой перерисовке. */
 .w-root[data-ready] .tile:not(.w-peek) { animation: none; }
+
+/* ============================================================
+   Без свечений: ни ореолов, ни цветных теней, ни подсветки под курсором.
+   Остались только тёмные тени меню/листов (глубина) и внутренние кольца отметок.
+   ============================================================ */
+.conn-dot, .conn[data-online="true"] .conn-dot { box-shadow: none; animation: none; }
+.card, .card[data-status="new"], .card-accent { box-shadow: none; }
+.flow-step[data-current="true"] .flow-mark { box-shadow: none; }
+.ev-dot, .next-row i, .dots i.now { box-shadow: none; }
+.fab { box-shadow: none; }
+.tile::before { content: none; }
+/* Цветных пятен на фоне нет: ровный тёмный фон. */
+.aurora { display: none; }

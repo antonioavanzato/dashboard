@@ -444,15 +444,6 @@ function moveGlow() {
 new MutationObserver(moveGlow).observe($('tabbar'), { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'hidden'] });
 addEventListener('resize', moveGlow);
 
-// Подсветка карточек под курсором (Mac).
-addEventListener('pointermove', (e) => {
-  const tile = e.target.closest?.('.tile');
-  if (!tile) return;
-  const r = tile.getBoundingClientRect();
-  tile.style.setProperty('--mx', `${e.clientX - r.left}px`);
-  tile.style.setProperty('--my', `${e.clientY - r.top}px`);
-});
-
 tick();
 setInterval(tick, 1000);
 render();
