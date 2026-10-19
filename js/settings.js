@@ -3,6 +3,7 @@
 // - Задачи — аккаунт Firebase (тот же email, что в приложении).
 // Выход только стирает вход на этом устройстве, данные в облаках не трогает.
 import { tasksState, signIn, signOutTasks } from './tasks.js';
+import { pushSupported, savedPublicKey, currentSubscription, enablePush, disablePush } from './push.js';
 
 let overlay = null;
 let content = null;
@@ -158,9 +159,78 @@ function render() {
     section('Заявки и Планер', yRow),
     ...(faceBlock.length ? [section('Вход по Face ID', ...faceBlock)] : []),
     section('Задачи', ...firebaseBlock()),
-    section('Уведомления',
-      element('p', 'st-hint', 'Уведомления о новых заявках приходят в Telegram — их настройка не в этом приложении.')),
+    section('Уведомления', ...pushBlock(),
+      element('p', 'st-hint', 'Telegram-уведомления работают как прежде — их настройка не в этом приложении.')),
   );
+}
+
+// Блок Web Push. Ничего не отправляет в облако: подписку вы сами копируете в пушер.
+function pushBlock() {
+  const box = element('div', 'st-push');
+  if (!pushSupported()) {
+    box.append(element('p', 'st-hint', 'Пуши доступны в приложении с экрана «Домой» (iOS 16.4 и новее).'));
+    return [box];
+  }
+  const keyInput = element('input', 'ed-input');
+  keyInput.placeholder = 'Публичный VAPID-ключ пушера';
+  keyInput.autocomplete = 'off';
+  keyInput.spellcheck = false;
+  keyInput.value = savedPublicKey();
+  const err = element('p', 'ed-error');
+  err.hidden = true;
+  const out = element('textarea', 'ed-input st-push-sub');
+  out.readOnly = true;
+  out.rows = 4;
+  out.hidden = true;
+  const copy = element('button', 'button', 'Скопировать подписку');
+  copy.type = 'button';
+  copy.hidden = true;
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(out.value);
+      copy.textContent = 'Скопировано';
+    } catch {
+      out.select();
+    }
+  });
+  const row = element('div', 'st-row');
+  const status = element('span', 'st-value', 'Проверяю…');
+  const btn = element('button', 'button button--primary', 'Включить');
+  btn.type = 'button';
+  const off = element('button', 'button', 'Выключить');
+  off.type = 'button';
+  off.hidden = true;
+  row.append(status, btn, off);
+
+  const show = (subJson) => {
+    status.textContent = subJson ? 'Включены на этом устройстве' : 'Выключены';
+    btn.textContent = subJson ? 'Заново' : 'Включить';
+    off.hidden = !subJson;
+    out.hidden = copy.hidden = !subJson;
+    out.value = subJson || '';
+  };
+  currentSubscription().then((s) => show(s ? JSON.stringify(s) : '')).catch(() => show(''));
+
+  btn.addEventListener('click', async () => {
+    err.hidden = true;
+    btn.disabled = true;
+    try {
+      show(await enablePush(keyInput.value));
+      copy.textContent = 'Скопировать подписку';
+    } catch (e) {
+      err.textContent = e.message || 'Не удалось включить';
+      err.hidden = false;
+    }
+    btn.disabled = false;
+  });
+  off.addEventListener('click', async () => {
+    await disablePush().catch(() => {});
+    show('');
+  });
+
+  box.append(row, keyInput, err, out, copy, element('p', 'st-hint',
+    'После включения скопируйте подписку в переменную PUSH_SUBSCRIPTION пушера. В пуше нет личных данных — только тип заявки.'));
+  return [box];
 }
 
 export function openSettings(next) {

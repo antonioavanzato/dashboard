@@ -1387,3 +1387,8 @@ body.ed-open { overflow: hidden; }
 .cm-foot-item small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cm-meta { align-self: flex-start; padding: 0; background: none; border: 0; color: var(--muted); font: inherit; font-size: 11px; font-family: 'JetBrains Mono', monospace; cursor: pointer; }
 .cm-logout { align-self: center; margin-top: 4px; padding: 4px 8px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+
+/* Web Push в настройках */
+.st-push { display: flex; flex-direction: column; gap: 8px; }
+.st-push .st-row .button { flex-shrink: 0; }
+.st-push-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; }
