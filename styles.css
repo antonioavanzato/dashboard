@@ -1406,3 +1406,7 @@ body.ed-open { overflow: hidden; }
 .st-more-sum::after { content: ' ›'; }
 .st-more[open] > .st-more-sum::after { content: ' ⌄'; }
 .st-more-actions { justify-content: flex-start; flex-wrap: wrap; }
+
+/* iOS (приложение с экрана «Домой», бета iOS 27): под открытым листом внизу видна полоса фона
+   страницы, куда лист не дотягивается. Пока лист открыт, красим фон в тон листа — полоса сливается. */
+html:has(body.ed-open) { background: #111318; }

@@ -212,8 +212,18 @@ function pushBlock() {
   const keyHint = element('p', 'st-hint',
     'После включения скопируйте подписку в переменную PUSH_SUBSCRIPTION пушера. В пуше нет личных данных — только тип заявки.');
 
+  // Пушер хранит одну подписку — iPhone. На Mac кнопку не показываем, чтобы случайно
+  // не подписать его вместо телефона (iPad тоже называет себя MacIntel, но с касаниями).
+  const isMac = navigator.platform === 'MacIntel' && navigator.maxTouchPoints === 0;
+
   const show = (subJson) => {
     const on = Boolean(subJson);
+    if (!on && isMac) {
+      status.textContent = 'Пуши приходят на iPhone';
+      btn.hidden = true;
+      more.hidden = true;
+      return;
+    }
     status.textContent = on ? 'Включены ✓' : 'Выключены';
     btn.hidden = on;
     more.hidden = !on;
