@@ -1,67 +1,64 @@
-// Пушер: Web Push о новых заявках в дашборд.
-// Отдельная функция Yandex Cloud с таймером «раз в минуту».
+// Пушер: Web Push о новой заявке в дашборд (подстраховка к Telegram).
+// Отдельная функция Yandex Cloud. Будит её сама форма сайта — рядом с notifyGAS,
+// после того как hub-api ответил «ok». Один вызов на одну заявку.
 //
-// БЕЗОПАСНОСТЬ: делает ТОЛЬКО чтение — тот же GET ?r=orders, что дашборд.
-// Никаких POST/PATCH/DELETE, ничего не пишет ни в YDB, ни куда-либо ещё,
-// своего хранилища не имеет. Выключили таймер — системы как будто не касались.
+// БЕЗОПАСНОСТЬ: не обращается ни к hub-api, ни к YDB, ни к чему-либо ещё в облаке.
+// Принимает только факт заявки (тип и сайт) — как GAS, без личных данных —
+// и пересылает его в Apple. Удалили функцию — облако как было.
 //
-// Без хранилища: каждый запуск берёт заявки, созданные за прошлую целую минуту
-// [T−60 с, T), где T — время срабатывания таймера, округлённое до минуты.
-// Соседние запуски смотрят на разные минуты, поэтому одна заявка — один пуш.
-//
-// Переменные окружения функции:
-//   ORDERS_URL        — адрес основной функции (как BASE_URL в js/api.js)
-//   API_KEY           — ключ X-Api-Key (тот же, что вводится в дашборде)
+// Переменные окружения:
 //   VAPID_PUBLIC      — публичный VAPID-ключ (его же вставить в настройках дашборда)
 //   VAPID_PRIVATE     — приватный VAPID-ключ (никому не показывать)
 //   VAPID_SUBJECT     — mailto:ваша@почта
 //   PUSH_SUBSCRIPTION — подписка из настроек дашборда (JSON целиком)
 const webpush = require('web-push');
 
-const MINUTE = 60 * 1000;
+// Как SOURCE_LABELS в GAS: чужой источник станет безликим «сайт».
+const SOURCE_LABELS = {
+  'avanzato.ru': 'avanzato.ru',
+  'presets': 'avanzato.ru',
+  'presets-maldives': 'alga-tour.com',
+  'github': 'antonioavanzato.github.io',
+};
 
-function triggerTime(event) {
-  const t = Date.parse(event?.messages?.[0]?.event_metadata?.created_at || '');
-  return Number.isNaN(t) ? Date.now() : t;
+// Адрес функции публичный (лежит в коде сайта), поэтому лимит, как в GAS:
+// не больше 20 пушей за 10 минут на экземпляр функции.
+const FLOOD_LIMIT = 20;
+const FLOOD_WINDOW_MS = 10 * 60 * 1000;
+let windowId = 0;
+let sent = 0;
+
+function underFloodLimit() {
+  const id = Math.floor(Date.now() / FLOOD_WINDOW_MS);
+  if (id !== windowId) { windowId = id; sent = 0; }
+  if (sent >= FLOOD_LIMIT) return false;
+  sent += 1;
+  return true;
 }
 
-async function fetchOrders() {
-  const res = await fetch(`${process.env.ORDERS_URL}?r=orders`, {
-    method: 'GET',
-    headers: { 'X-Api-Key': process.env.API_KEY },
-  });
-  if (!res.ok) throw new Error(`orders ${res.status}`);
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
-}
+const ok = () => ({ statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*' }, body: 'ok' });
 
 module.exports.handler = async (event) => {
-  const end = Math.floor(triggerTime(event) / MINUTE) * MINUTE;
-  const start = end - MINUTE;
+  try {
+    if (event.httpMethod !== 'POST' || !event.body) return ok();
+    const raw = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+    const data = JSON.parse(raw);
+    let type = String(data.type || '').trim() || 'Заявка';
+    if (type.length > 60) type = type.slice(0, 60);
+    const site = SOURCE_LABELS[String(data.source || '').trim()] || 'сайт';
 
-  const orders = await fetchOrders();
-  const fresh = orders.filter((o) => {
-    const t = Date.parse(o.created_at || '');
-    return t >= start && t < end;
-  });
-  if (!fresh.length) return { statusCode: 200, body: 'нет новых' };
+    if (!underFloodLimit()) return ok();
 
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT, process.env.VAPID_PUBLIC, process.env.VAPID_PRIVATE);
-  const subscription = JSON.parse(process.env.PUSH_SUBSCRIPTION);
-
-  for (const o of fresh) {
-    const type = String(o.type || 'Заявка').slice(0, 60);
-    const payload = JSON.stringify({
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT, process.env.VAPID_PUBLIC, process.env.VAPID_PRIVATE);
+    await webpush.sendNotification(JSON.parse(process.env.PUSH_SUBSCRIPTION), JSON.stringify({
       title: 'Новая заявка',
-      body: type, // только тип — без имени, телефона и ника
-      tag: `order-${o.id}`,
-    });
-    try {
-      await webpush.sendNotification(subscription, payload, { TTL: 3600 });
-    } catch (e) {
-      // 404/410 — подписка устарела: включите пуши в дашборде заново и обновите PUSH_SUBSCRIPTION.
-      console.error('push', e.statusCode || '', e.body || e.message);
-    }
+      body: `${type} · ${site}`,
+      tag: `order-${Date.now()}`,
+    }), { TTL: 3600 });
+  } catch (e) {
+    // Видно в логах функции. 410 — подписка устарела: включите пуши в дашборде заново.
+    console.error('push', e.statusCode || '', e.body || e.message);
   }
-  return { statusCode: 200, body: `отправлено: ${fresh.length}` };
+  // Форма шлёт no-cors и ответ не читает — всегда «ok», чтобы ошибка пуша не выглядела как проблема с заявкой.
+  return ok();
 };
