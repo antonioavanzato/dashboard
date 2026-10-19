@@ -19,6 +19,7 @@ import { loadKey, saveKey, clearKey, verifyKey, setMemoryKey, removeStoredKey } 
 import { hasLock, clearLock, unlock, enableLock } from './lock.js';
 import { renderHome, renderStudentsTile, setHomeNavigate } from './home.js';
 import { cmBegin } from './cloud-monitor.js';
+import { activeOrders } from './store.js';
 import {
   setStudents, renderStudents, studentsSubtitle, currentCourse, setCourse, studentsLoaded, resetStudents,
   setStudentHandlers, studentExists, courseTitle, isAdminEmail,
@@ -76,6 +77,14 @@ function eventsLabel(n) {
   return `${n} событий`;
 }
 
+// Бейдж на кнопке «Заявки» в Планере — новые заявки (как «новых» на виджете главной).
+function updateOrdersBadge() {
+  const badge = document.getElementById('orders-badge');
+  const fresh = activeOrders(orders).filter((o) => o.status === 'new').length;
+  badge.hidden = fresh === 0;
+  badge.textContent = fresh > 99 ? '99+' : String(fresh);
+}
+
 function applyView() {
   const isPlanner = view === 'planner';
   const isHome = view === 'home';
@@ -85,8 +94,10 @@ function applyView() {
   document.getElementById('view-students').hidden = view !== 'students';
   document.getElementById('tab-students').setAttribute('aria-pressed', String(view === 'students'));
   document.getElementById('tab-home').setAttribute('aria-pressed', String(isHome));
-  document.getElementById('tab-orders').setAttribute('aria-pressed', String(view === 'orders'));
-  document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner));
+  // Заявки — часть Планера: в доке подсвечен Планер, кнопка «Заявки» — в шапке Планера.
+  document.getElementById('tab-planner').setAttribute('aria-pressed', String(isPlanner || view === 'orders'));
+  document.getElementById('orders-btn').hidden = !isPlanner;
+  updateOrdersBadge();
   document.getElementById('list-screen').dataset.view = view;
   // «+» только в Планере; ученики добавляются кнопкой «Добавить ученика», как в приложении.
   const showFab = isPlanner;
@@ -373,7 +384,8 @@ function onPickCourse(id) {
 }
 
 async function poll() {
-  if (view === 'planner') return pollPlanner();
+  // В Планере заодно обновляем заявки — для бейджа на кнопке «Заявки».
+  if (view === 'planner') { pollPlanner(); return pollOrders(); }
   if (view === 'students') return pollStudents();
   // Главной нужны заявки, события и ученики.
   if (view === 'home') {
@@ -382,6 +394,10 @@ async function poll() {
     // Cloud Monitor: сам грузит не чаще раза в 300 с (как в приложении) и только пока видна главная.
     cmBegin();
   }
+  return pollOrders();
+}
+
+async function pollOrders() {
   const key = loadKey();
   if (!key) return;
   try {
@@ -398,6 +414,7 @@ async function poll() {
     orders = fresh;
     if (changed) {
       if (view === 'home') applyView();
+      else if (view === 'planner') updateOrdersBadge();
       else render();
     }
   } catch (error) {
@@ -517,7 +534,7 @@ fab.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => { if (!e.target.closest('#fab-wrap')) closeFab(); });
 
 document.getElementById('tab-home').addEventListener('click', () => switchView('home'));
-document.getElementById('tab-orders').addEventListener('click', () => switchView('orders'));
+document.getElementById('orders-btn').addEventListener('click', () => switchView('orders'));
 document.getElementById('tab-planner').addEventListener('click', () => switchView('planner'));
 document.getElementById('tab-students').addEventListener('click', () => switchView('students'));
 document.getElementById('tab-settings').addEventListener('click', openSettingsSheet);
