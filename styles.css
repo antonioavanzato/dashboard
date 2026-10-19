@@ -1397,3 +1397,12 @@ body.ed-open { overflow: hidden; }
 .st-push { display: flex; flex-direction: column; gap: 8px; }
 .st-push .st-row .button { flex-shrink: 0; }
 .st-push-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; }
+.st-more { display: flex; flex-direction: column; gap: 8px; }
+.st-more[hidden] { display: none; }
+.st-more[open] { gap: 8px; }
+.st-more > * + * { margin-top: 8px; }
+.st-more-sum { list-style: none; cursor: pointer; color: var(--muted); font-size: 12px; letter-spacing: .02em; }
+.st-more-sum::-webkit-details-marker { display: none; }
+.st-more-sum::after { content: ' ›'; }
+.st-more[open] > .st-more-sum::after { content: ' ⌄'; }
+.st-more-actions { justify-content: flex-start; flex-wrap: wrap; }

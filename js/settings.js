@@ -197,39 +197,60 @@ function pushBlock() {
   const status = element('span', 'st-value', 'Проверяю…');
   const btn = element('button', 'button button--primary', 'Включить');
   btn.type = 'button';
+  row.append(status, btn);
+
+  // Когда пуши включены, всё техническое и кнопки, ломающие подписку, — под «Подробнее»:
+  // новая подписка не совпадёт с PUSH_SUBSCRIPTION пушера, и пуши перестанут приходить.
+  const more = element('details', 'st-more');
+  more.append(element('summary', 'st-more-sum', 'Подробнее'));
+  const again = element('button', 'button', 'Подписаться заново');
+  again.type = 'button';
   const off = element('button', 'button', 'Выключить');
   off.type = 'button';
-  off.hidden = true;
-  row.append(status, btn, off);
+  const danger = element('div', 'st-row st-more-actions');
+  danger.append(again, off);
+  const keyHint = element('p', 'st-hint',
+    'После включения скопируйте подписку в переменную PUSH_SUBSCRIPTION пушера. В пуше нет личных данных — только тип заявки.');
 
   const show = (subJson) => {
-    status.textContent = subJson ? 'Включены на этом устройстве' : 'Выключены';
-    btn.textContent = subJson ? 'Заново' : 'Включить';
-    off.hidden = !subJson;
-    out.hidden = copy.hidden = !subJson;
+    const on = Boolean(subJson);
+    status.textContent = on ? 'Включены ✓' : 'Выключены';
+    btn.hidden = on;
+    more.hidden = !on;
+    more.open = false;
     out.value = subJson || '';
+    out.hidden = copy.hidden = !on;
+    // Выключено — поле ключа и подсказка на виду; включено — спрятаны в «Подробнее».
+    if (on) more.append(keyInput, out, copy, danger, keyHint);
+    else box.append(keyInput, err, keyHint);
   };
   currentSubscription().then((s) => show(s ? JSON.stringify(s) : '')).catch(() => show(''));
 
-  btn.addEventListener('click', async () => {
+  const subscribe = async (trigger) => {
     err.hidden = true;
-    btn.disabled = true;
+    trigger.disabled = true;
     try {
       show(await enablePush(keyInput.value));
       copy.textContent = 'Скопировать подписку';
     } catch (e) {
       err.textContent = e.message || 'Не удалось включить';
       err.hidden = false;
+      box.append(err);
     }
-    btn.disabled = false;
+    trigger.disabled = false;
+  };
+  btn.addEventListener('click', () => subscribe(btn));
+  again.addEventListener('click', () => {
+    if (!confirm('Создать новую подписку? Старая перестанет работать — новую нужно будет вставить в PUSH_SUBSCRIPTION пушера, иначе пуши не придут.')) return;
+    subscribe(again);
   });
   off.addEventListener('click', async () => {
+    if (!confirm('Выключить пуши на этом устройстве? Чтобы включить снова, понадобится заново вставить подписку в пушер.')) return;
     await disablePush().catch(() => {});
     show('');
   });
 
-  box.append(row, keyInput, err, out, copy, element('p', 'st-hint',
-    'После включения скопируйте подписку в переменную PUSH_SUBSCRIPTION пушера. В пуше нет личных данных — только тип заявки.'));
+  box.append(row, more);
   return [box];
 }
 
