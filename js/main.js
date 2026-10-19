@@ -60,6 +60,11 @@ const lastStudentsJson = {};
 
 // Дашборд всегда открывается с главной — это сводка по всем инструментам.
 function loadView() {
+  // Нажали на пуш, когда дашборд был закрыт: sw.js открывает ./?view=orders.
+  if (new URLSearchParams(location.search).get('view') === 'orders') {
+    history.replaceState(null, '', location.pathname);
+    return 'orders';
+  }
   return 'home';
 }
 
@@ -619,4 +624,10 @@ if ('serviceWorker' in navigator) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && reloadPending) reloadNow();
   });
+
+  // Нажали на пуш о заявке, когда дашборд уже открыт.
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if (e.data?.type === 'open-view' && e.data.view === 'orders') switchView('orders');
+  });
 }
+

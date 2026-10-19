@@ -7,7 +7,7 @@
 // проверяет sw.js при каждом запуске (updateViaCache: 'none' в main.js),
 // ставит новую версию в фоне, и страница один раз перезагружается.
 // Так нет ни «неделями старой версии», ни смеси старых и новых файлов.
-const CACHE = 'dashboard-shell-v30';
+const CACHE = 'dashboard-shell-v31';
 const FONTS = 'dashboard-fonts-v1';
 const SHELL = [
   './',
@@ -32,6 +32,7 @@ const SHELL = [
   'js/students.js',
   'js/student-actions.js',
   'js/cloud-monitor.js',
+  'js/push.js',
   'icons/icon.svg',
   'icons/logo.svg',
   'icons/apple-touch-icon-v3.png',
@@ -88,5 +89,35 @@ self.addEventListener('fetch', (event) => {
     } catch {
       return Response.error();
     }
+  })());
+});
+
+// Web Push о новой заявке (шлёт пушер, см. pusher/). В пуше только тип заявки — без личных данных.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(self.registration.showNotification(data.title || 'Новая заявка', {
+    body: data.body || '',
+    tag: data.tag || 'order',
+    icon: 'icons/icon-192-v3.png',
+    data: { view: 'orders' },
+  }));
+});
+
+// Нажатие на пуш — открыть дашборд сразу на «Заявках».
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const client = all[0];
+    if (client) {
+      client.postMessage({ type: 'open-view', view: 'orders' });
+      return client.focus();
+    }
+    return self.clients.openWindow('./?view=orders');
   })());
 });
