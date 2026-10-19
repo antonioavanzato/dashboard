@@ -458,8 +458,13 @@ body.ed-open { overflow: hidden; }
   position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.6);
   display: flex; align-items: flex-end; justify-content: center;
 }
+/* iOS (приложение с экрана «Домой»): inset: 0 не всегда доходит под полоску «домой» —
+   под листом оставалась чёрная полоса. Большой вьюпорт — это весь экран. */
+@supports (height: 100lvh) {
+  .ed-overlay { bottom: auto; height: 100lvh; }
+}
 .ed-sheet {
-  width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+  width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   background: #111; border: 1px solid var(--border); border-bottom: 0;
   border-radius: 18px 18px 0 0;
   padding: 16px 14px calc(env(safe-area-inset-bottom) + 16px);
@@ -1392,3 +1397,12 @@ body.ed-open { overflow: hidden; }
 .st-push { display: flex; flex-direction: column; gap: 8px; }
 .st-push .st-row .button { flex-shrink: 0; }
 .st-push-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; }
+.st-more { display: flex; flex-direction: column; gap: 8px; }
+.st-more[hidden] { display: none; }
+.st-more[open] { gap: 8px; }
+.st-more > * + * { margin-top: 8px; }
+.st-more-sum { list-style: none; cursor: pointer; color: var(--muted); font-size: 12px; letter-spacing: .02em; }
+.st-more-sum::-webkit-details-marker { display: none; }
+.st-more-sum::after { content: ' ›'; }
+.st-more[open] > .st-more-sum::after { content: ' ⌄'; }
+.st-more-actions { justify-content: flex-start; flex-wrap: wrap; }
