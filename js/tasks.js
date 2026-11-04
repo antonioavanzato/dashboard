@@ -188,11 +188,10 @@ async function guardedUpdate(task, fields) {
 
 /** Новая задача — тот же набор полей, что syncPersonalTaskToFirebase. */
 export async function createTask(fields) {
-  const { doc, setDoc, getDoc, Timestamp } = fb.store;
-  const id = crypto.randomUUID().toUpperCase();
-  const ref = doc(db, 'personal_tasks', id);
-  if ((await getDoc(ref)).exists()) throw new Error('Не удалось создать задачу, попробуйте ещё раз.');
-  const now = Timestamp.fromDate(new Date());
+  const { doc, setDoc, Timestamp } = fb.store;
+const id = crypto.randomUUID().toUpperCase();
+const ref = doc(db, 'personal_tasks', id);
+const now = Timestamp.fromDate(new Date());
   await setDoc(ref, {
     userId: user.uid,
     task: fields.task,
