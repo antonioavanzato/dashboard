@@ -270,7 +270,21 @@ function renderCalendar(root) {
     month = new Date(selected.getFullYear(), selected.getMonth(), 1);
     renderPlanner();
   });
-  nav.append(prev, title, next);
+  // «Сегодня» видна, только когда ушли с текущего месяца или выбран другой день.
+  const now = startOfDay(new Date());
+  const center = element('div', 'cal-center');
+  center.append(title);
+  if (!sameDay(selected, now) || month.getMonth() !== now.getMonth() || month.getFullYear() !== now.getFullYear()) {
+    const todayBtn = element('button', 'cal-today', 'Сегодня');
+    todayBtn.type = 'button';
+    todayBtn.addEventListener('click', () => {
+      selected = startOfDay(new Date());
+      month = new Date(selected.getFullYear(), selected.getMonth(), 1);
+      renderPlanner();
+    });
+    center.append(todayBtn);
+  }
+  nav.append(prev, center, next);
   root.append(nav);
 
   const grid = element('div', 'cal-grid');

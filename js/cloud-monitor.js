@@ -10,7 +10,6 @@ const API_BASE = 'https://d5dv3oi96qbceipsi7c5.kocrdvxt.apigw.yandexcloud.net';
 const ENDPOINTS = { login: '/auth/login', session: '/auth/session', logout: '/auth/logout', metrics: '/metrics' };
 export const CM_PROJECTS = [
   { key: 'avanzato', name: 'Avanzato' },
-  { key: 'alga', name: 'ALGA' },
 ];
 export const CM_REFRESH_MS = 300000; // 5 минут — как refreshInterval; не менять (квота)
 const FREE_TIER_CALLS = 1000000;

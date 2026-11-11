@@ -63,6 +63,7 @@ let data = { orders: [], events: null };
 let onPickCourse = () => {};
 let navigate = () => {};
 let selected = null; // id раскрытого мини-виджета
+let cmOpen = false; // раскрыта ли выжимка Cloud Monitor (Avanzato) под датой
 let readyTimer = null;
 
 export function setHomeNavigate(fn) { navigate = fn; }
@@ -155,20 +156,6 @@ const WIDGETS = {
       return nodes;
     },
   },
-  // Cloud Monitor — по мини-виджету на проект, как плитки ProjectTileCard в приложении.
-  // Своего раздела нет: подробности — в выжимке под рядом.
-  cmAvanzato: {
-    title: 'Avanzato',
-    kind: 'mini',
-    mini: () => cmMini('avanzato'),
-    peek: () => cmPeek('avanzato'),
-  },
-  cmAlga: {
-    title: 'ALGA',
-    kind: 'mini',
-    mini: () => cmMini('alga'),
-    peek: () => cmPeek('alga'),
-  },
   next: {
     title: 'Ближайшее',
     kind: 'wide',
@@ -224,8 +211,6 @@ const DEFAULT_LAYOUT = [
   { id: 'orders', on: true },
   { id: 'today', on: true },
   { id: 'students', on: true },
-  { id: 'cmAvanzato', on: true },
-  { id: 'cmAlga', on: true },
   { id: 'next', on: true },
   { id: 'year', on: true },
   { id: 'yearDots', on: false },
@@ -349,6 +334,32 @@ function peekPanel(id) {
   return panel;
 }
 
+// Cloud Monitor (только Avanzato): строка рядом с датой, нажатие раскрывает выжимку.
+function cmChip() {
+  const m = cmMini('avanzato');
+  const chip = el('button', 'cm-chip');
+  chip.type = 'button';
+  chip.setAttribute('aria-expanded', String(cmOpen));
+  if (m.level) chip.dataset.level = m.level;
+  if (m.dim) chip.classList.add('is-dim');
+  chip.append(el('span', 'cm-chip-dot'), el('span', null, 'Avanzato'), el('b', 'mono', String(m.num)), el('span', 'sub', m.sub));
+  chip.addEventListener('click', () => { cmOpen = !cmOpen; render(); });
+  return chip;
+}
+
+function cmPanel() {
+  const panel = el('div', 'tile wide w-peek');
+  const head = el('div', 'row');
+  const close = el('button', 'w-open', 'Свернуть ›');
+  close.type = 'button';
+  close.addEventListener('click', () => { cmOpen = false; render(); });
+  head.append(el('span', 'label', 'Avanzato · облако'), close);
+  const body = el('div', 'next');
+  body.append(...cmPeek('avanzato'));
+  panel.append(head, body);
+  return panel;
+}
+
 function render() {
   const root = $('homeWidgets');
   if (!root) return;
@@ -357,7 +368,10 @@ function render() {
   const visible = layout.filter((w) => w.on).map((w) => w.id);
   if (selected && !visible.includes(selected)) selected = null;
 
+  const slot = $('cmSlot');
+  if (slot) slot.replaceChildren(cmChip());
   root.replaceChildren();
+  if (cmOpen) root.append(cmPanel());
   let grid = null;
   let gridHasSelected = false;
   const flushGrid = () => {
